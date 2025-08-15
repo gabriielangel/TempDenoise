@@ -1,0 +1,6 @@
+PySide6>=6.5
+numpy
+opencv-python
+imageio
+tqdm
+# Optional for CinemaDNG: rawpy, tifffile
