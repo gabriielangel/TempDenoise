@@ -1,19 +1,23 @@
+# setup.py
 from setuptools import setup
 
-APP = ['-m', 'temporal_denoiser']
-DATA_FILES = []
+APP = ['temporal_denoiser/__main__.py']
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['cv2', 'numpy', 'PySide6', 'imageio'],
+    'iconfile': 'temporal_denoiser/resources/app_icon.icns',
+    'packages': ['numpy', 'scipy', 'opencv', 'rawpy', 'PySide6', 'imageio'],
     'plist': {
         'CFBundleName': 'TemporalDenoiser',
-        'CFBundleIdentifier': 'com.example.temporaldenoiser',
-    }
+        'CFBundleShortVersionString': '1.0',
+        'CFBundleVersion': '1.0',
+    },
+    'includes': ['numpy', 'scipy', 'opencv', 'rawpy', 'PySide6', 'imageio'],
+    'excludes': [],
+    'compressed': True,
 }
 
 setup(
     app=APP,
-    data_files=DATA_FILES,
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
 )
