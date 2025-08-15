@@ -1,0 +1,49 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-macos:
+    runs-on: macos-13
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install py2app
+        brew install create-dmg
+
+    - name: Build .app (Standalone)
+      run: |
+        python setup.py py2app --standalone
+
+    - name: Create DMG
+      run: |
+        mkdir -p dist_dmg
+        hdiutil detach /Volumes/TemporalDenoiser || true
+        create-dmg \
+          --skip-jenkins \
+          --volname "TemporalDenoiser" \
+          --window-size 500 300 \
+          --icon-size 100 \
+          --app-drop-link 250 150 \
+          dist_dmg/TemporalDenoiser_$(date +%s).dmg \
+          dist
+
+    - name: Upload DMG Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TemporalDenoiser-macOS
+        path: dist_dmg/*.dmg
