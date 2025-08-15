@@ -27,7 +27,7 @@ jobs:
 
     - name: Build .app (Standalone)
       run: |
-        python setup.py py2app --standalone
+        python setup.py py2app
 
     - name: Create DMG
       run: |
