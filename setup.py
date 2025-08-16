@@ -1,7 +1,7 @@
-# setup.py
 from setuptools import setup
 
 APP = ['temporal_denoiser/__main__.py']
+
 OPTIONS = {
     'argv_emulation': True,
     'iconfile': 'temporal_denoiser/resources/app_icon.icns',
@@ -21,12 +21,20 @@ OPTIONS = {
         'imageio',
         'PySide6',
     ],
+    'excludes': [
+        'setuptools',
+        'distutils',
+        'pkg_resources',
+        'wheel',
+        'pip',
+        'jaraco',  # prevents jaraco.context bloat error
+    ],
+    'compressed': True,
     'plist': {
         'CFBundleName': 'TemporalDenoiser',
         'CFBundleShortVersionString': '1.0',
         'CFBundleVersion': '1.0',
     },
-    'compressed': True,
 }
 
 setup(
