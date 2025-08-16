@@ -5,14 +5,27 @@ APP = ['temporal_denoiser/__main__.py']
 OPTIONS = {
     'argv_emulation': True,
     'iconfile': 'temporal_denoiser/resources/app_icon.icns',
-    'packages': ['numpy', 'scipy', 'opencv', 'rawpy', 'PySide6', 'imageio'],
+    'packages': [
+        'numpy',
+        'scipy',
+        'cv2',
+        'rawpy',
+        'imageio',
+        'PySide6',
+    ],
+    'includes': [
+        'numpy',
+        'scipy',
+        'cv2',
+        'rawpy',
+        'imageio',
+        'PySide6',
+    ],
     'plist': {
         'CFBundleName': 'TemporalDenoiser',
         'CFBundleShortVersionString': '1.0',
         'CFBundleVersion': '1.0',
     },
-    'includes': ['numpy', 'scipy', 'opencv', 'rawpy', 'PySide6', 'imageio'],
-    'excludes': [],
     'compressed': True,
 }
 
