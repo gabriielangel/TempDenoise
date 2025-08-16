@@ -26,7 +26,7 @@ jobs:
 
       - name: Build .app bundle
         run: |
-          python setup.py py2app --skip-jenkins
+          python setup.py py2app
 
       - name: Cleanup unwanted packages
         run: |
