@@ -25,6 +25,12 @@ jobs:
         pip install py2app
         brew install create-dmg
 
+    - name: Fix py2app hidden imports
+      run: |
+        echo "import cv2" >> temporal_denoiser/__main__.py
+        echo "import scipy" >> temporal_denoiser/__main__.py
+
+
     - name: Build .app (Standalone)
       run: |
         python setup.py py2app
