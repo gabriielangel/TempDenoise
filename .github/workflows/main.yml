@@ -28,6 +28,12 @@ jobs:
         run: |
           python setup.py py2app
 
+      - name: Cleanup unwanted packages
+        run: |
+          rm -rf "dist/TemporalDenoiser.app/Contents/Resources/lib/python3.10/pkg_resources"
+          rm -rf "dist/TemporalDenoiser.app/Contents/Resources/lib/python3.10/setuptools*"
+          rm -rf "dist/TemporalDenoiser.app/Contents/Resources/lib/python3.10/jaraco*"
+
       - name: Create DMG
         run: |
           mkdir -p dist_dmg
