@@ -29,16 +29,17 @@ jobs:
         run: |
           pip install git+https://github.com/ronaldoussoren/py2app.git
 
-      - name: Patch py2app for Python 3.10 compatibility
+      - name: Patch py2app stdlib for Python 3.10
         run: |
           pip install importlib_resources
           stdlib_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs', 'stdlib.py'))")
           echo "Patching $stdlib_file"
-          # Replace imports
-          sed -i.bak 's/from importlib import resources/import importlib_resources as resources/g' "$stdlib_file"
-          sed -i.bak 's/import importlib.resources as resources/import importlib_resources as resources/g' "$stdlib_file"
-          # Replace abc usage correctly
-          sed -i.bak 's/resources\.abc/importlib_resources.abc/g' "$stdlib_file"
+          # Replace the import line safely
+          sed -i.bak 's/from importlib import resources/import importlib_resources as resources/' "$stdlib_file"
+          sed -i.bak 's/import importlib.resources as resources/import importlib_resources as resources/' "$stdlib_file"
+          # Replace abc references safely (ensure no "importlib." prefix)
+          sed -i.bak 's/resources\.abc/importlib_resources.abc/' "$stdlib_file"
+
 
 
       - name: Build app with py2app
