@@ -30,6 +30,7 @@ OPTIONS = {
         'rawpy',
         'imageio',
         'PySide6',
+        'shiboken6',  # needed for PySide6
     ],
     'includes': [
         'numpy',
@@ -38,6 +39,7 @@ OPTIONS = {
         'rawpy',
         'imageio',
         'PySide6',
+        'shiboken6',
     ],
     'excludes': [
         'setuptools',
@@ -52,11 +54,11 @@ OPTIONS = {
         'CFBundleName': 'TemporalDenoiser',
         'CFBundleShortVersionString': '1.0',
         'CFBundleVersion': '1.0',
+        'LSMinimumSystemVersion': '12.0',  # force compatibility with macOS 12+
     },
 }
 
 setup(
     app=APP,
     options={'py2app': OPTIONS},
-    # remove setup_requires=['py2app']
 )
