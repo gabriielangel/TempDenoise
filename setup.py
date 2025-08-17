@@ -1,4 +1,21 @@
 # setup.py
+import sys
+import types
+
+# Patch for Python 3.10: ensure importlib.resources is the backport
+try:
+    import importlib_resources as ilr
+    # Create a fake "importlib" module if not present
+    if "importlib" not in sys.modules:
+        import importlib
+    # Force submodule mapping
+    sys.modules["importlib.resources"] = ilr
+    # Also attach it as attribute of importlib
+    import importlib as _importlib
+    setattr(_importlib, "resources", ilr)
+except ImportError:
+    pass
+
 
 from setuptools import setup
 
