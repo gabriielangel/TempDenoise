@@ -20,9 +20,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
-          pip install py2app
+          pip install git+https://github.com/ronaldoussoren/py2app.git
 
       - name: Build .app bundle
         run: |
