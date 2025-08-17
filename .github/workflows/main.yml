@@ -25,8 +25,7 @@ jobs:
           pip install git+https://github.com/ronaldoussoren/py2app.git
           pip install importlib_resources
 
-      - name: Install backport for importlib.resources
-        run: pip install importlib_resources
+     
 
       - name: Build .app bundle
         run: |
