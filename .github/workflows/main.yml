@@ -34,13 +34,27 @@ jobs:
           pip install importlib_resources
           recipe_dir=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs'))")
           echo "Patching files in $recipe_dir"
+          # Patch import statements
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/from importlib import resources/import importlib_resources as resources/' {} \;
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/import importlib\.resources as resources/import importlib_resources as resources/' {} \;
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.resources/importlib_resources/' {} \;
+          # Patch type annotations and references
+          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.resources\.abc/importlib_resources.abc/' {} \;
+          # Avoid incorrect replacements
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.importlib_resources/importlib_resources/' {} \;
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/resources\.abc/importlib_resources.abc/' {} \;
           # Verify patching
-          find "$recipe_dir" -type f -name "*.py" -exec grep "importlib_resources" {} \;
+          find "$recipe_dir" -type f -name "*.py" -exec grep -H "importlib_resources" {} \;
+          # Check for erroneous importlib_importlib_resources
+          if grep -r "importlib_importlib_resources" "$recipe_dir"; then
+            echo "Error: Found incorrect 'importlib_importlib_resources' in patched files"
+            exit 1
+          fi
+
+      - name: Display patched stdlib.py
+        run: |
+          stdlib_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs', 'stdlib.py'))")
+          echo "Contents of $stdlib_file:"
+          cat "$stdlib_file"
+        if: failure()
 
       - name: Build app with py2app
         run: |
