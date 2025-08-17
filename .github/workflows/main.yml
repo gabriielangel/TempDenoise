@@ -28,9 +28,10 @@ jobs:
       - name: Install backport for importlib.resources
         run: pip install importlib_resources
 
-      - name: Build .app bundle
+      - name: Build app with py2app
         run: |
-          python setup.py py2app
+          python setup.py py2app -v
+
 
       - name: Verify __boot__.py does not import pkg_resources
         run: |
