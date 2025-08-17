@@ -1,4 +1,4 @@
-name: Build macOS App
+name: Build macOS App (PyInstaller)
 
 on:
   push:
@@ -12,68 +12,35 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          pip install numpy scipy opencv-python-headless rawpy imageio PySide6
-          pip install modulegraph==0.19.6  # Pin modulegraph version
-          pip install importlib_resources
+          pip install -r requirements.txt
+          pip install pyinstaller==6.6.0
 
-      - name: Install py2app (GitHub fork)
+      - name: Build app with PyInstaller
+        env:
+          # ensure the produced binary targets macOS 12+ ABI
+          MACOSX_DEPLOYMENT_TARGET: "12.0"
         run: |
-          pip install git+https://github.com/ronaldoussoren/py2app.git
-
-      - name: Patch py2app for Python 3.10 compatibility
-        run: |
-          pip install importlib_resources
-          recipe_dir=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs'))")
-          modulegraph_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_modulegraph.py'))")
-          echo "Patching files in $recipe_dir and $modulegraph_file"
-          # Add importlib_resources import if not present
-          find "$recipe_dir" -type f -name "*.py" -exec sh -c 'grep -q "import importlib_resources" "{}" || echo "import importlib_resources" | cat - "{}" > temp && mv temp "{}"' \;
-          # Patch import statements
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/from importlib import resources/import importlib_resources as resources/' {} \;
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/import importlib\.resources as resources/import importlib_resources as resources/' {} \;
-          # Patch type annotations and references
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.resources\.abc/importlib_resources.abc/' {} \;
-          # Avoid incorrect replacements
-          find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.importlib_resources/importlib_resources/' {} \;
-          # Patch _modulegraph.py to avoid super().import_package
-          sed -i.bak '/super().import_package/d' "$modulegraph_file"
-          sed -i.bak '/def import_package/a\
-              node = self.import_module(package_name, importing_module)' "$modulegraph_file"
-          # Verify patching
-          find "$recipe_dir" -type f -name "*.py" -exec grep -H "importlib_resources" {} \;
-          grep -H "import_package" "$modulegraph_file"
-          # Check for erroneous importlib_importlib_resources
-          if grep -r "importlib_importlib_resources" "$recipe_dir"; then
-            echo "Error: Found incorrect 'importlib_importlib_resources' in patched files"
-            exit 1
-          fi
-
-      - name: Display patched stdlib.py
-        run: |
-          stdlib_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs', 'stdlib.py'))")
-          echo "Contents of $stdlib_file:"
-          cat "$stdlib_file"
-        if: failure()
-
-      - name: Build app with py2app
-        run: |
-          python setup.py py2app --verbose
+          pyinstaller --clean --noconfirm TemporalDenoiser.spec
+          test -d "dist/TemporalDenoiser.app" || (echo "App bundle not found!" && exit 1)
 
       - name: Create DMG
         run: |
           mkdir -p dist_dmg
-          hdiutil create -volname "TemporalDenoiser" -srcfolder "dist/TemporalDenoiser.app" -ov -format UDZO "dist_dmg/TemporalDenoiser.dmg"
+          DMG_NAME="TemporalDenoiser_${{ github.run_number }}.dmg"
+          hdiutil create -volname "TemporalDenoiser" \
+                         -srcfolder "dist/TemporalDenoiser.app" \
+                         -ov -format UDZO "dist_dmg/$DMG_NAME"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
