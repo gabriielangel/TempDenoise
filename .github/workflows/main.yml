@@ -33,8 +33,10 @@ jobs:
 
       - name: Patch py2app for Python 3.10 compatibility
         run: |
+          pip install importlib_resources
           recipe_dir=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs'))")
-          echo "Patching files in $recipe_dir"
+          modulegraph_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_modulegraph.py'))")
+          echo "Patching files in $recipe_dir and $modulegraph_file"
           # Add importlib_resources import if not present
           find "$recipe_dir" -type f -name "*.py" -exec sh -c 'grep -q "import importlib_resources" "{}" || echo "import importlib_resources" | cat - "{}" > temp && mv temp "{}"' \;
           # Patch import statements
@@ -44,8 +46,13 @@ jobs:
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.resources\.abc/importlib_resources.abc/' {} \;
           # Avoid incorrect replacements
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/importlib\.importlib_resources/importlib_resources/' {} \;
+          # Patch _modulegraph.py to avoid super().import_package
+          sed -i.bak '/super().import_package/d' "$modulegraph_file"
+          sed -i.bak '/def import_package/a\
+              node = self.import_module(package_name, importing_module)' "$modulegraph_file"
           # Verify patching
           find "$recipe_dir" -type f -name "*.py" -exec grep -H "importlib_resources" {} \;
+          grep -H "import_package" "$modulegraph_file"
           # Check for erroneous importlib_importlib_resources
           if grep -r "importlib_importlib_resources" "$recipe_dir"; then
             echo "Error: Found incorrect 'importlib_importlib_resources' in patched files"
