@@ -28,6 +28,15 @@ jobs:
         run: |
           python setup.py py2app
 
+      - name: Verify __boot__.py does not import pkg_resources
+        run: |
+          if grep -q "pkg_resources" dist/TemporalDenoiser.app/Contents/Resources/__boot__.py; then
+            echo "❌ ERROR: __boot__.py still imports pkg_resources. Check setup.py (use_pkg_resources=False)."
+            exit 1
+          else
+            echo "✅ Verified: __boot__.py is clean (no pkg_resources)."
+          fi    
+
       - name: Cleanup unwanted packages
         run: |
           rm -rf "dist/TemporalDenoiser.app/Contents/Resources/lib/python3.10/pkg_resources"
