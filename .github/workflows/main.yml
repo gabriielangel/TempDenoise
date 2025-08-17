@@ -23,8 +23,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install git+https://github.com/ronaldoussoren/py2app.git
           python -m pip install numpy scipy opencv-python-headless rawpy imageio PySide6
-
-          # pip install importlib_resources
+# pip install importlib_resources
 
       - name: Install backport for importlib.resources
         run: pip install importlib_resources
