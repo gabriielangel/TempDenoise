@@ -38,7 +38,7 @@ jobs:
           sed -i.bak 's/from importlib import resources/import importlib_resources as resources/' "$stdlib_file"
           sed -i.bak 's/import importlib.resources as resources/import importlib_resources as resources/' "$stdlib_file"
           # Replace abc references safely (ensure no "importlib." prefix)
-          sed -i.bak 's/resources\.abc/importlib_resources.abc/' "$stdlib_file"
+          sed -i.bak 's/resources\.abc/importlib_resources.abc/' "$stdlib_file" 
 
 
 
