@@ -1,3 +1,13 @@
+# setup.py
+import sys
+
+# Patch: force Python 3.10 to use importlib_resources backport
+try:
+    import importlib_resources as ilr
+    sys.modules["importlib.resources"] = ilr
+except ImportError:
+    pass
+
 from setuptools import setup
 
 APP = ['temporal_denoiser/__main__.py']
@@ -30,7 +40,6 @@ OPTIONS = {
         'jaraco',  # prevents jaraco.context bloat error
     ],
     'compressed': True,
-    'use_pkg_resources': False,  # 🚫 disable pkg_resources bootstrapping
     'plist': {
         'CFBundleName': 'TemporalDenoiser',
         'CFBundleShortVersionString': '1.0',
