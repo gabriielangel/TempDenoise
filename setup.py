@@ -30,6 +30,7 @@ OPTIONS = {
         'jaraco',  # prevents jaraco.context bloat error
     ],
     'compressed': True,
+    'use_pkg_resources': False,  # 🚫 disable pkg_resources bootstrapping
     'plist': {
         'CFBundleName': 'TemporalDenoiser',
         'CFBundleShortVersionString': '1.0',
