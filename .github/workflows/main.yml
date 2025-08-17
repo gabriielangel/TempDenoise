@@ -31,9 +31,12 @@ jobs:
 
       - name: Patch py2app for Python 3.10 compatibility
         run: |
-          # Replace importlib.resources.abc with importlib_resources.abc
-          sed -i.bak 's/importlib\.resources\.abc/importlib_resources.abc/g' $(python -c "import py2app, inspect, os; print(os.path.dirname(inspect.getfile(py2app)))")/_recipedefs/stdlib.py || true
           pip install importlib_resources
+          stdlib_file=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs', 'stdlib.py'))")
+          echo "Patching $stdlib_file"
+          sed -i.bak 's/import importlib.resources as resources/import importlib_resources as resources/g' "$stdlib_file"
+          sed -i.bak 's/importlib.resources.abc/importlib_resources.abc/g' "$stdlib_file"
+
 
       - name: Build app with py2app
         run: |
