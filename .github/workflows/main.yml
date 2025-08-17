@@ -34,6 +34,8 @@ jobs:
           pip install importlib_resources
           recipe_dir=$(python -c "import py2app, inspect, os; print(os.path.join(os.path.dirname(inspect.getfile(py2app)), '_recipedefs'))")
           echo "Patching files in $recipe_dir"
+          # Add importlib_resources import if not present
+          find "$recipe_dir" -type f -name "*.py" -exec sh -c 'grep -q "import importlib_resources" "{}" || echo "import importlib_resources" | cat - "{}" > temp && mv temp "{}"' \;
           # Patch import statements
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/from importlib import resources/import importlib_resources as resources/' {} \;
           find "$recipe_dir" -type f -name "*.py" -exec sed -i.bak 's/import importlib\.resources as resources/import importlib_resources as resources/' {} \;
