@@ -1,51 +1,52 @@
 # TemporalDenoiser.spec
-# PyInstaller spec file for TemporalDenoiser
 
-import os
-import shutil
+# -*- mode: python ; coding: utf-8 -*-
+
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules
 
-# ---- Fix for PySide6 Qt framework symlink conflicts ----
-qt_frameworks = [
-    "Qt3DAnimation.framework",
-    "Qt3DCore.framework",
-    "Qt3DRender.framework",
-    "Qt3DInput.framework",
-    "Qt3DLogic.framework",
-    "Qt3DExtras.framework",
-]
+proj_root = Path.cwd()
 
-build_dir = Path("dist") / "TemporalDenoiser" / "_internal" / "PySide6" / "Qt" / "lib"
-for fw in qt_frameworks:
-    fw_path = build_dir / fw / "Resources"
-    if fw_path.is_symlink():
-        os.unlink(fw_path)
-    elif fw_path.exists():
-        shutil.rmtree(fw_path)
-
-# ---- Normal PyInstaller spec begins ----
-block_cipher = None
+# Collect all PySide6 hidden imports
+pyside6_hidden = collect_submodules('PySide6')
 
 a = Analysis(
     ['temporal_denoiser/__main__.py'],
-    pathex=[str(Path(__file__).parent)],
+    pathex=[str(proj_root)],
     binaries=[],
     datas=[
-        ('temporal_denoiser/resources/app_icon.icns', '.'),
+        ('temporal_denoiser/resources/app_icon.icns', '.'),  # include app icon
     ],
-    hiddenimports=collect_submodules('PySide6'),
+    hiddenimports=[
+        'numpy',
+        'scipy',
+        'cv2',
+        'rawpy',
+        'imageio',
+        *pyside6_hidden,   # all PySide6 plugins and backends
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['setuptools', 'distutils', 'pkg_resources', 'wheel', 'pip', 'jaraco'],
+    excludes=[
+        'setuptools',
+        'distutils',
+        'pkg_resources',
+        'wheel',
+        'pip',
+        'jaraco',
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
-    cipher=block_cipher,
+    cipher=None,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(
+    a.pure,
+    a.zipped_data,
+    cipher=None,
+)
 
 exe = EXE(
     pyz,
@@ -57,8 +58,15 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=False,  # GUI app
     icon='temporal_denoiser/resources/app_icon.icns',
+)
+
+app = BUNDLE(
+    exe,
+    name='TemporalDenoiser.app',
+    icon='temporal_denoiser/resources/app_icon.icns',
+    bundle_identifier='com.example.temporaldenoiser',
 )
 
 coll = COLLECT(
