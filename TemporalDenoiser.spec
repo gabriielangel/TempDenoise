@@ -1,84 +1,64 @@
-# -*- mode: python ; coding: utf-8 -*-
-
-import sys
-import os
-from pathlib import Path
-from PyInstaller.utils.hooks import (
-    collect_submodules, collect_data_files, collect_dynamic_libs
-)
-
-# --- Collects for key libs ---
-pyside6_hidden   = collect_submodules("PySide6")
-pyside6_datas    = collect_data_files("PySide6")
-pyside6_bins     = collect_dynamic_libs("PySide6")
-shiboken6_datas  = collect_data_files("shiboken6")
-
-cv2_hidden       = collect_submodules("cv2")
-cv2_bins         = collect_dynamic_libs("cv2")
-
-numpy_bins       = collect_dynamic_libs("numpy")
-scipy_bins       = collect_dynamic_libs("scipy")
-
-rawpy_bins       = collect_dynamic_libs("rawpy")
-rawpy_datas      = collect_data_files("rawpy")
-
-imageio_datas    = collect_data_files("imageio")
-
-# --- Safe project root (works in CI where __file__ may be undefined) ---
-proj_root = Path(os.getcwd())
-
-# --- App resources ---
-app_icon = str(proj_root / "temporal_denoiser" / "resources" / "app_icon.icns")
-
 # TemporalDenoiser.spec
+# PyInstaller spec file for TemporalDenoiser
+
 import os
 import shutil
+from pathlib import Path
+from PyInstaller.utils.hooks import collect_submodules
 
-# Clean conflicting symlinks before PyInstaller assembles
+# ---- Fix for PySide6 Qt framework symlink conflicts ----
 qt_frameworks = [
     "Qt3DAnimation.framework",
     "Qt3DCore.framework",
     "Qt3DRender.framework",
-    # add others if needed
+    "Qt3DInput.framework",
+    "Qt3DLogic.framework",
+    "Qt3DExtras.framework",
 ]
 
-build_dir = os.path.join("dist", "TemporalDenoiser", "_internal", "PySide6", "Qt", "lib")
+build_dir = Path("dist") / "TemporalDenoiser" / "_internal" / "PySide6" / "Qt" / "lib"
 for fw in qt_frameworks:
-    fw_path = os.path.join(build_dir, fw, "Resources")
-    if os.path.islink(fw_path):
+    fw_path = build_dir / fw / "Resources"
+    if fw_path.is_symlink():
         os.unlink(fw_path)
-    elif os.path.exists(fw_path):
+    elif fw_path.exists():
         shutil.rmtree(fw_path)
 
+# ---- Normal PyInstaller spec begins ----
+block_cipher = None
+
 a = Analysis(
-    ["temporal_denoiser/__main__.py"],
-    pathex=[str(proj_root)],
-    binaries=(pyside6_bins + cv2_bins + numpy_bins + scipy_bins + rawpy_bins),
-    datas=(pyside6_datas + shiboken6_datas + rawpy_datas + imageio_datas),
-    hiddenimports=(pyside6_hidden + cv2_hidden),
+    ['temporal_denoiser/__main__.py'],
+    pathex=[str(Path(__file__).parent)],
+    binaries=[],
+    datas=[
+        ('temporal_denoiser/resources/app_icon.icns', '.'),
+    ],
+    hiddenimports=collect_submodules('PySide6'),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["setuptools", "distutils", "pkg_resources", "wheel", "pip", "jaraco"],
+    excludes=['setuptools', 'distutils', 'pkg_resources', 'wheel', 'pip', 'jaraco'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
+    cipher=block_cipher,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name="TemporalDenoiser",
+    name='TemporalDenoiser',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
-    icon=app_icon,
+    icon='temporal_denoiser/resources/app_icon.icns',
 )
 
 coll = COLLECT(
@@ -89,19 +69,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="TemporalDenoiser",
-)
-
-app = BUNDLE(
-    coll,
-    name="TemporalDenoiser.app",
-    bundle_identifier="com.example.temporaldenoiser",
-    icon=app_icon,
-    info_plist={
-        "CFBundleName": "TemporalDenoiser",
-        "CFBundleDisplayName": "TemporalDenoiser",
-        "CFBundleShortVersionString": "1.0",
-        "CFBundleVersion": "1.0",
-        "NSHighResolutionCapable": "True",
-    },
+    name='TemporalDenoiser',
 )
