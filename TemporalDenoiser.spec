@@ -30,6 +30,26 @@ proj_root = Path(os.getcwd())
 # --- App resources ---
 app_icon = str(proj_root / "temporal_denoiser" / "resources" / "app_icon.icns")
 
+# TemporalDenoiser.spec
+import os
+import shutil
+
+# Clean conflicting symlinks before PyInstaller assembles
+qt_frameworks = [
+    "Qt3DAnimation.framework",
+    "Qt3DCore.framework",
+    "Qt3DRender.framework",
+    # add others if needed
+]
+
+build_dir = os.path.join("dist", "TemporalDenoiser", "_internal", "PySide6", "Qt", "lib")
+for fw in qt_frameworks:
+    fw_path = os.path.join(build_dir, fw, "Resources")
+    if os.path.islink(fw_path):
+        os.unlink(fw_path)
+    elif os.path.exists(fw_path):
+        shutil.rmtree(fw_path)
+
 a = Analysis(
     ["temporal_denoiser/__main__.py"],
     pathex=[str(proj_root)],
