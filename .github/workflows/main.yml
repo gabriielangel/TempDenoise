@@ -1,41 +1,50 @@
-name: Build-macos
+name: Build-macOS
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 jobs:
-  build:
-    runs-on: macos-13
+  build-macos:
+    runs-on: macos-13  # macOS 12 runner for compatibility
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.10.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.10.12"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel setuptools
-          pip install pyinstaller PySide6 numpy scipy opencv-python rawpy imageio
+          python -m pip install --upgrade pip
+          pip install pyinstaller create-dmg
+          pip install -r requirements.txt
 
       - name: Build app with PyInstaller
         run: |
-          pyinstaller TemporalDenoiser.spec
+          pyinstaller TemporalDenoiser.spec --noconfirm
+
+      - name: Prepare DMG root folder
+        run: |
+          mkdir dmg-root
+          cp -R dist/TemporalDenoiser.app dmg-root/
 
       - name: Create DMG
         run: |
-          mkdir -p dist/dmg
-          hdiutil create dist/dmg/TemporalDenoiser.dmg \
-            -volname "TemporalDenoiser" \
-            -srcfolder dist/TemporalDenoiser \
-            -ov -format UDZO
+          create-dmg \
+            --volname "TemporalDenoiser" \
+            --window-size 500 300 \
+            --icon-size 100 \
+            --app-drop-link 400 150 \
+            TemporalDenoiser.dmg \
+            dmg-root/
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: TemporalDenoiser-macos
-          path: dist/dmg/TemporalDenoiser.dmg
-
+          name: TemporalDenoiser-macOS
+          path: TemporalDenoiser.dmg
