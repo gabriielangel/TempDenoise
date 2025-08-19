@@ -36,14 +36,13 @@ jobs:
       - name: Create DMG
         run: |
           mkdir -p dist_dmg
-          APP_PATH="dist/TemporalDenoiser.app"
-          DMG_NAME="TemporalDenoiser-$(date +'%Y%m%d').dmg"
+          DMG_NAME="TemporalDenoiser_${{ github.run_number }}.dmg"
           hdiutil create -volname "TemporalDenoiser" \
-                         -srcfolder "$APP_PATH" \
+                         -srcfolder "dist/TemporalDenoiser.app" \
                          -ov -format UDZO "dist_dmg/$DMG_NAME"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: TemporalDenoiser-macOS
-          path: dist/dmg/TemporalDenoiser.dmg
+          path: dist_dmg/*.dmg
