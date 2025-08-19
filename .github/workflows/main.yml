@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-13
+    runs-on: macos-12
 
     steps:
       - name: Checkout repository
@@ -23,7 +23,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller create-dmg
+          pip install pyinstaller
+
+      - name: Install create-dmg tool
+        run: |
+          brew install create-dmg
 
       - name: Build app with PyInstaller
         run: |
