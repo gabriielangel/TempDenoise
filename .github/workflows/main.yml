@@ -35,13 +35,12 @@ jobs:
 
       - name: Create DMG
         run: |
-          mkdir -p dist/dmg
-          create-dmg \
-            --dmg-title="TemporalDenoiser" \
-            --volname "TemporalDenoiser" \
-            --app-drop-link 400 200 \
-            dist/TemporalDenoiser.app \
-            dist/dmg/TemporalDenoiser.dmg
+          mkdir -p dist_dmg
+          APP_PATH="dist/TemporalDenoiser.app"
+          DMG_NAME="TemporalDenoiser-$(date +'%Y%m%d').dmg"
+          hdiutil create -volname "TemporalDenoiser" \
+                         -srcfolder "$APP_PATH" \
+                         -ov -format UDZO "dist_dmg/$DMG_NAME"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
