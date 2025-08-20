@@ -2,16 +2,17 @@ name: Build macOS App
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   build-macos:
     runs-on: macos-13
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
@@ -28,6 +29,9 @@ jobs:
         run: |
           export MACOSX_DEPLOYMENT_TARGET=12.0
           pyinstaller TemporalDenoiser.spec --clean --noconfirm
+
+      - name: Install create-dmg
+        run: brew install create-dmg
 
       - name: Create DMG
         run: |
