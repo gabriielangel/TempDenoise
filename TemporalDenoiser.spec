@@ -1,43 +1,37 @@
 # TemporalDenoiser.spec
-
-# -*- mode: python ; coding: utf-8 -*-
+# PyInstaller spec file for macOS app bundle
 
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+from PyInstaller.utils.hooks import collect_submodules
 
-# Project root
+# Project root directory
 proj_root = Path(".").resolve()
 
-# Hidden imports (PyInstaller sometimes misses these)
+# Hidden imports for PySide6 and other libs
 hidden_imports = (
-    collect_submodules("numpy")
-    + collect_submodules("scipy")
+    collect_submodules("PySide6")
     + collect_submodules("cv2")
-    + collect_submodules("rawpy")
-    + collect_submodules("imageio")
-    + collect_submodules("PySide6")
+    + collect_submodules("scipy")
+    + collect_submodules("numpy")
 )
 
-# Resource files (icons, etc.)
-datas = collect_data_files("imageio") + [
-    ("temporal_denoiser/resources/app_icon.icns", "temporal_denoiser/resources"),
-]
+block_cipher = None
 
-# Main app entry point
 a = Analysis(
-    ["temporal_denoiser/__main__.py"],
+    [str(proj_root / "temporal_denoiser/__main__.py")],
     pathex=[str(proj_root)],
     binaries=[],
-    datas=datas,
+    datas=[
+        (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
+    ],
     hiddenimports=hidden_imports,
     hookspath=[],
-    hooksconfig={},
     runtime_hooks=[],
-    excludes=["setuptools", "distutils", "pkg_resources", "wheel", "pip", "jaraco"],
+    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco"],
     noarchive=False,
 )
 
-pyz = PYZ(a.pure)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
     pyz,
@@ -49,8 +43,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # GUI app, not terminal
-    icon="temporal_denoiser/resources/app_icon.icns",
+    console=False,
+    icon=str(proj_root / "temporal_denoiser/resources/app_icon.icns"),
 )
 
 coll = COLLECT(
@@ -67,13 +61,15 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name="TemporalDenoiser.app",
-    icon="temporal_denoiser/resources/app_icon.icns",
-    bundle_identifier="com.temporaldnsr.app",
+    icon=str(proj_root / "temporal_denoiser/resources/app_icon.icns"),
+    bundle_identifier="com.temporaldenoiser.app",
     info_plist={
-        "NSHighResolutionCapable": True,
         "CFBundleName": "TemporalDenoiser",
-        "CFBundleDisplayName": "TemporalDenoiser",
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1.0",
+        "NSHighResolutionCapable": "True",
     },
+    # ⬇️ Important: do NOT embed libpython (fixes mkfifoat crash)
+    # PyInstaller will use system Python runtime
+    runtime_tmpdir=None,
 )
