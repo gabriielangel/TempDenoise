@@ -20,15 +20,12 @@ block_cipher = None
 a = Analysis(
     [str(proj_root / "temporal_denoiser/__main__.py")],
     pathex=[str(proj_root)],
-    binaries=[
-        # Explicitly exclude libpython3.10.dylib to ensure framework Python is used
-        (None, "libpython3.10.dylib"),
-    ],
+    binaries=[],
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
     ],
     hiddenimports=hidden_imports,
-    hookspath=[],
+    hookspath=[str(proj_root / "hooks")],  # Add custom hooks directory
     runtime_hooks=[],
     excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco", "libpython3.10.dylib"],
     noarchive=False,
