@@ -20,14 +20,17 @@ block_cipher = None
 a = Analysis(
     [str(proj_root / "temporal_denoiser/__main__.py")],
     pathex=[str(proj_root)],
-    binaries=[],
+    binaries=[
+        # Explicitly exclude libpython3.10.dylib to ensure framework Python is used
+        (None, "libpython3.10.dylib"),
+    ],
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
     ],
     hiddenimports=hidden_imports,
     hookspath=[],
     runtime_hooks=[],
-    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco"],
+    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco", "libpython3.10.dylib"],
     noarchive=False,
 )
 
@@ -68,8 +71,8 @@ app = BUNDLE(
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1.0",
         "NSHighResolutionCapable": "True",
+        "LSMinimumSystemVersion": "12.0",  # Ensure macOS 12 compatibility
     },
-    # ⬇️ Important: do NOT embed libpython (fixes mkfifoat crash)
-    # PyInstaller will use system Python runtime
+    # Use system Python runtime to avoid embedding incompatible libpython
     runtime_tmpdir=None,
 )
