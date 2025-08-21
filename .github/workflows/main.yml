@@ -1,4 +1,4 @@
-name: Build macOS App  
+name: Build macOS App
 
 on:
   push:
@@ -14,21 +14,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
+      - name: Install Python 3.10 framework
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          curl -o python-installer.pkg https://www.python.org/ftp/python/3.10.8/python-3.10.8-macos11.pkg
+          sudo installer -pkg python-installer.pkg -target /
+          /Applications/Python\ 3.10/bin/pip3 install --upgrade pip
+          /Applications/Python\ 3.10/bin/pip3 install -r requirements.txt
+          /Applications/Python\ 3.10/bin/pip3 install pyinstaller
 
       - name: Build app with PyInstaller
         run: |
           export MACOSX_DEPLOYMENT_TARGET=12.0
-          pyinstaller TemporalDenoiser.spec --clean --noconfirm
+          /Applications/Python\ 3.10/bin/python3 -m PyInstaller TemporalDenoiser.spec --clean --noconfirm --verbose
 
       - name: Install create-dmg
         run: brew install create-dmg
