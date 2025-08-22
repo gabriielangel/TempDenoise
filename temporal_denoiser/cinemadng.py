@@ -15,14 +15,14 @@ try:
     HAS_RAWPY = True
 except Exception:
     HAS_RAWPY = False
-    logger.error("rawpy import failed")
+    logger.warning("rawpy import failed; CinemaDNG file processing will be disabled")
 
 try:
     import tifffile
     HAS_TIFFFILE = True
 except Exception:
     HAS_TIFFFILE = False
-    logger.error("tifffile import failed")
+    logger.warning("tifffile import failed; DNG output may be limited")
 
 def available():
     return HAS_RAWPY and HAS_TIFFFILE
@@ -35,7 +35,8 @@ try:
             self.images = []
             try:
                 if not HAS_RAWPY:
-                    raise ImportError("rawpy is required to load CinemaDNG files")
+                    logger.warning("Cannot load CinemaDNG files without rawpy")
+                    return
                 # Load DNG files from a directory or single file
                 if self.file_path.is_dir():
                     self.images = [str(f) for f in self.file_path.glob("*.dng")]
@@ -49,6 +50,9 @@ try:
         def get_images(self):
             logger.debug("Returning images from CinemaDNG")
             try:
+                if not HAS_RAWPY:
+                    logger.warning("Cannot read images without rawpy")
+                    return []
                 # Read images using rawpy
                 return [rawpy.imread(path).postprocess(output_bps=16, no_auto_bright=True, use_camera_wb=True).astype(np.float32) / 65535.0 for path in self.images]
             except Exception as e:
@@ -58,6 +62,9 @@ try:
         def denoise(self, frame_radius: int = 3, spatial_median: int = 0):
             logger.debug(f"Denoising with frame_radius={frame_radius}, spatial_median={spatial_median}")
             try:
+                if not self.images:
+                    logger.warning("No images loaded for denoising")
+                    return None
                 denoiser = PreviewDenoiser()
                 idx = len(self.images) // 2  # Process middle frame as example
                 orig, denoised = denoiser.preview(self.images, idx, frame_radius, spatial_median)
