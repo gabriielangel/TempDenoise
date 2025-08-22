@@ -2,7 +2,7 @@
 # PyInstaller spec file for macOS app bundle
 
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
 # Project root directory
 proj_root = Path(".").resolve()
@@ -14,7 +14,11 @@ hidden_imports = (
     + collect_submodules("cv2")
     + collect_submodules("scipy")
     + collect_submodules("numpy")
-    + ["temporal_denoiser.cinemadng", "temporal_denoiser.denoise"]  # Explicitly include package modules
+    + collect_submodules("rawpy")
+    + collect_submodules("imageio")
+    + collect_submodules("imageio.plugins")
+    + collect_submodules("tifffile")
+    + ["temporal_denoiser.cinemadng", "temporal_denoiser.denoise"]
 )
 
 block_cipher = None
@@ -23,11 +27,12 @@ a = Analysis(
     [str(proj_root / "temporal_denoiser/__main__.py")],
     pathex=[str(proj_root)],
     binaries=[
-        # Include Python framework libraries for self-contained app
         ("/Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib", ".")
     ],
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
+        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/PySide6/Qt/plugins", "PySide6/Qt/plugins"),
+        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy/libraw", "rawpy/libraw"),
     ],
     hiddenimports=hidden_imports,
     hookspath=[str(proj_root / "hooks")],
