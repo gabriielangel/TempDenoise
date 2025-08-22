@@ -35,6 +35,18 @@ jobs:
           /usr/local/bin/pip3 install -r requirements.txt
           /usr/local/bin/pip3 install pyinstaller==6.15.0
 
+      - name: Debug rawpy installation
+        run: |
+          echo "Listing rawpy directory contents:"
+          ls -R /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
+          echo "Checking for libraw:"
+          ls -l /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
+
+      - name: Debug cinemadng.py
+        run: |
+          echo "Contents of cinemadng.py:"
+          cat temporal_denoiser/cinemadng.py || echo "cinemadng.py not found"
+
       - name: Build app with PyInstaller
         run: |
           export MACOSX_DEPLOYMENT_TARGET=12.0
@@ -44,6 +56,8 @@ jobs:
         run: |
           echo "Listing app bundle Frameworks:"
           ls -R dist/TemporalDenoiser.app/Contents/Frameworks || echo "No Frameworks directory found"
+          echo "Listing app bundle Resources:"
+          ls -R dist/TemporalDenoiser.app/Contents/Resources || echo "No Resources directory found"
         if: always()
 
       - name: Install create-dmg
