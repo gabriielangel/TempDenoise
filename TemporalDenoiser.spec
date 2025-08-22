@@ -7,12 +7,14 @@ from PyInstaller.utils.hooks import collect_submodules
 # Project root directory
 proj_root = Path(".").resolve()
 
-# Hidden imports for PySide6 and other libs
+# Hidden imports for all required modules
 hidden_imports = (
     collect_submodules("PySide6")
+    + collect_submodules("PySide6.scripts")
     + collect_submodules("cv2")
     + collect_submodules("scipy")
     + collect_submodules("numpy")
+    + ["temporal_denoiser.cinemadng", "temporal_denoiser.denoise"]  # Explicitly include package modules
 )
 
 block_cipher = None
@@ -20,14 +22,17 @@ block_cipher = None
 a = Analysis(
     [str(proj_root / "temporal_denoiser/__main__.py")],
     pathex=[str(proj_root)],
-    binaries=[],
+    binaries=[
+        # Include Python framework libraries for self-contained app
+        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib", ".")
+    ],
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
     ],
     hiddenimports=hidden_imports,
-    hookspath=[str(proj_root / "hooks")],  # Add custom hooks directory
+    hookspath=[str(proj_root / "hooks")],
     runtime_hooks=[],
-    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco", "libpython3.10.dylib"],
+    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco"],
     noarchive=False,
 )
 
@@ -68,8 +73,6 @@ app = BUNDLE(
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1.0",
         "NSHighResolutionCapable": "True",
-        "LSMinimumSystemVersion": "12.0",  # Ensure macOS 12 compatibility
+        "LSMinimumSystemVersion": "12.0",
     },
-    # Use system Python runtime to avoid embedding incompatible libpython
-    runtime_tmpdir=None,
 )
