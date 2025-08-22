@@ -23,6 +23,8 @@ jobs:
           ls -l /usr/local/bin/python* /usr/local/bin/pip* || echo "No Python binaries in /usr/local/bin"
           echo "Listing Python framework:"
           ls -l /Library/Frameworks/Python.framework/Versions/3.10/ || echo "No Python framework in expected location"
+          echo "Listing Python library:"
+          ls -l /Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib || echo "No libpython3.10.dylib found"
           # Verify Python and pip versions
           /usr/local/bin/python3 --version || echo "Python 3 not found in /usr/local/bin"
           /usr/local/bin/pip3 --version || echo "pip3 not found in /usr/local/bin"
@@ -31,12 +33,18 @@ jobs:
         run: |
           /usr/local/bin/pip3 install --upgrade pip
           /usr/local/bin/pip3 install -r requirements.txt
-          /usr/local/bin/pip3 install pyinstaller
+          /usr/local/bin/pip3 install pyinstaller==6.15.0
 
       - name: Build app with PyInstaller
         run: |
           export MACOSX_DEPLOYMENT_TARGET=12.0
           /usr/local/bin/python3 -m PyInstaller TemporalDenoiser.spec --clean --noconfirm --log-level DEBUG
+
+      - name: Inspect app bundle
+        run: |
+          echo "Listing app bundle Frameworks:"
+          ls -R dist/TemporalDenoiser.app/Contents/Frameworks || echo "No Frameworks directory found"
+        if: always()
 
       - name: Install create-dmg
         run: brew install create-dmg
