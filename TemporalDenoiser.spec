@@ -3,9 +3,16 @@
 
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+import os
 
 # Project root directory
 proj_root = Path(".").resolve()
+
+# Dynamically locate rawpy/libraw
+rawpy_path = "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy"
+libraw_data = []
+if os.path.exists(os.path.join(rawpy_path, "libraw")):
+    libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
 
 # Hidden imports for all required modules
 hidden_imports = (
@@ -32,8 +39,7 @@ a = Analysis(
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
         ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/PySide6/Qt/plugins", "PySide6/Qt/plugins"),
-        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy/libraw", "rawpy/libraw"),
-    ],
+    ] + libraw_data,
     hiddenimports=hidden_imports,
     hookspath=[str(proj_root / "hooks")],
     runtime_hooks=[],
