@@ -1,8 +1,12 @@
 from temporal_denoiser.cinemadng import CinemaDNG
-from temporal_denoiser.denoise import denoise_image
+from temporal_denoiser.denoise import PreviewDenoiser
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QVBoxLayout, QWidget
 import sys
-import os
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -29,19 +33,34 @@ class MainWindow(QMainWindow):
         self.cinemadng = None
 
     def load_cinemadng(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select CinemaDNG File")
-        if file_path:
-            self.cinemadng = CinemaDNG(file_path)
-            print(f"Loaded {file_path}")
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Select CinemaDNG File or Directory", "", "DNG Files (*.dng)")
+            if file_path:
+                logger.debug(f"Loading CinemaDNG from {file_path}")
+                self.cinemadng = CinemaDNG(file_path)
+                logger.info(f"Loaded {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to load CinemaDNG: {e}")
 
     def run_denoise(self):
-        if self.cinemadng:
-            # Example: Process images using denoise_image
+        try:
+            if not self.cinemadng:
+                logger.warning("No CinemaDNG file loaded")
+                return
+            logger.debug("Starting denoising")
             images = self.cinemadng.get_images()
-            denoised_images = [denoise_image(img) for img in images]
-            print("Denoising complete")
-        else:
-            print("No CinemaDNG file loaded")
+            if not images:
+                logger.warning("No images to denoise")
+                return
+            denoiser = PreviewDenoiser()
+            idx = len(images) // 2  # Process middle frame as example
+            orig, denoised = denoiser.preview([str(p) for p in self.cinemadng.images], idx, frame_radius=3, spatial_median=0)
+            logger.info("Denoising complete")
+            # Placeholder: Display or save denoised image
+            # Example: Save denoised image
+            self.cinemadng.save_denoised("output", frame_radius=3, spatial_median=0)
+        except Exception as e:
+            logger.error(f"Denoising failed: {e}")
 
 def main():
     app = QApplication(sys.argv)
