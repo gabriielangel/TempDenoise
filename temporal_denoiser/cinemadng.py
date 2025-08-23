@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 try:
     import rawpy
     HAS_RAWPY = True
-except Exception:
+except Exception as e:
     HAS_RAWPY = False
-    logger.warning("rawpy import failed; CinemaDNG file processing will be disabled")
+    logger.warning(f"rawpy import failed: {e}; CinemaDNG file processing will be disabled")
 
 try:
     import tifffile
     HAS_TIFFFILE = True
-except Exception:
+except Exception as e:
     HAS_TIFFFILE = False
-    logger.warning("tifffile import failed; DNG output may be limited")
+    logger.warning(f"tifffile import failed: {e}; DNG output will use fallback (PNG)")
 
 def available():
     return HAS_RAWPY and HAS_TIFFFILE
@@ -71,6 +71,19 @@ try:
                 return denoised
             except Exception as e:
                 logger.error(f"Denoising failed: {e}")
+                raise
+
+        def save_denoised(self, output_dir, frame_radius=3, spatial_median=0):
+            logger.debug(f"Saving denoised images to {output_dir}")
+            try:
+                if not self.images:
+                    logger.warning("No images loaded for saving")
+                    return
+                exporter = StreamExporter()
+                exporter.export(self.images, output_dir, frame_radius, spatial_median)
+                logger.info(f"Denoised images saved to {output_dir}")
+            except Exception as e:
+                logger.error(f"Failed to save denoised images: {e}")
                 raise
 
 except Exception as e:
