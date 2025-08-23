@@ -14,6 +14,9 @@ libraw_data = []
 if os.path.exists(os.path.join(rawpy_path, "libraw")):
     libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
 
+# Collect tifffile data files
+tifffile_data = collect_data_files("tifffile", include_py_files=False)
+
 # Hidden imports for all required modules
 hidden_imports = (
     collect_submodules("PySide6")
@@ -39,7 +42,7 @@ a = Analysis(
     datas=[
         (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
         ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/PySide6/Qt/plugins", "PySide6/Qt/plugins"),
-    ] + libraw_data,
+    ] + libraw_data + tifffile_data,
     hiddenimports=hidden_imports,
     hookspath=[str(proj_root / "hooks")],
     runtime_hooks=[],
