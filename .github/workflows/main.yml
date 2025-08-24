@@ -1,4 +1,4 @@
-name: Build TemporalDenoiser
+name: Build TemporalDenoiser 
 
 on:
   push:
