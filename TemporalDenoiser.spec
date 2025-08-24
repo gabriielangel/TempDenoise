@@ -28,7 +28,7 @@ hidden_imports = (
     + collect_submodules("imageio")
     + collect_submodules("imageio.plugins")
     + collect_submodules("tifffile")
-    + ["temporal_denoiser.cinemadng", "temporal_denoiser.denoise"]
+    + ["temporal_denoiser.cinemadng", "temporal_denoiser.denoise", "tifffile"]
 )
 
 block_cipher = None
