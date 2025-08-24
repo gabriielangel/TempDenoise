@@ -32,7 +32,6 @@ try:
     class CinemaDNG:
         def __init__(self, file_path):
             logger.debug(f"Initializing CinemaDNG with file_path: {file_path}")
-            self.file_path = Path(file_path)
             self.images = []
             try:
                 if not HAS_RAWPY:
@@ -41,10 +40,10 @@ try:
                 # Handle single file, multiple files, or directory
                 if isinstance(file_path, (list, tuple)):
                     self.images = [str(Path(f)) for f in file_path]
-                elif self.file_path.is_dir():
-                    self.images = [str(f) for f in self.file_path.glob("*.dng")]
+                elif Path(file_path).is_dir():
+                    self.images = [str(f) for f in Path(file_path).glob("*.dng")]
                 else:
-                    self.images = [str(self.file_path)]
+                    self.images = [str(Path(file_path))]
                 logger.debug(f"Loaded {len(self.images)} DNG files: {self.images}")
             except Exception as e:
                 logger.error(f"Failed to load CinemaDNG files: {e}")
