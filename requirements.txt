@@ -1,20 +1,11 @@
-# Core numerical/scientific stack
-numpy==1.26.4
-scipy==1.11.4
-
-# OpenCV (headless: no GUI deps, lighter for CI)
-opencv-python-headless==4.8.1.78
-
-# Raw image support
-rawpy==0.19.0
-imageio==2.33.1
-
-# GUI framework
-PySide6==6.5.2
-
-# Optional but useful
-tqdm==4.66.1
-
+PySide6==6.5.0
+numpy==1.24.3
+scipy==1.10.1
+opencv-python==4.7.0.72
+rawpy==0.18.0
+tifffile>=2022.10.10
+imageio==2.28.1
+PyInstaller==5.13.0
 # Optional for CinemaDNG: rawpy, tifffile
 
 
