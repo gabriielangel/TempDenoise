@@ -23,6 +23,7 @@ try:
 except Exception as e:
     HAS_TIFFFILE = False
     logger.warning(f"tifffile import failed: {e}; DNG output will use fallback (PNG)")
+    logger.debug("tifffile import failure details:", exc_info=True)
 
 def available():
     return HAS_RAWPY and HAS_TIFFFILE
@@ -54,7 +55,15 @@ try:
                     logger.warning("Cannot read images without rawpy")
                     return []
                 # Read images using rawpy
-                return [rawpy.imread(path).postprocess(output_bps=16, no_auto_bright=True, use_camera_wb=True).astype(np.float32) / 65535.0 for path in self.images]
+                images = []
+                for path in self.images:
+                    try:
+                        img = rawpy.imread(path).postprocess(output_bps=16, no_auto_bright=True, use_camera_wb=True)
+                        images.append(img.astype(np.float32) / 65535.0)
+                    except Exception as e:
+                        logger.error(f"Failed to read image {path}: {e}")
+                logger.debug(f"Successfully read {len(images)} images")
+                return images
             except Exception as e:
                 logger.error(f"Failed to read images: {e}")
                 raise
@@ -68,6 +77,7 @@ try:
                 denoiser = PreviewDenoiser()
                 idx = len(self.images) // 2  # Process middle frame as example
                 orig, denoised = denoiser.preview(self.images, idx, frame_radius, spatial_median)
+                logger.info("Denoising completed")
                 return denoised
             except Exception as e:
                 logger.error(f"Denoising failed: {e}")
@@ -79,8 +89,13 @@ try:
                 if not self.images:
                     logger.warning("No images loaded for saving")
                     return
+                os.makedirs(output_dir, exist_ok=True)
                 exporter = StreamExporter()
                 exporter.export(self.images, output_dir, frame_radius, spatial_median)
+                if not HAS_TIFFFILE:
+                    logger.warning("Saved images as PNG due to missing tifffile")
+                else:
+                    logger.info("Saved images as DNG")
                 logger.info(f"Denoised images saved to {output_dir}")
             except Exception as e:
                 logger.error(f"Failed to save denoised images: {e}")
