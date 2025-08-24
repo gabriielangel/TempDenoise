@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         # Frame index slider
         self.frame_slider = QSlider(Qt.Horizontal)
         self.frame_slider.setMinimum(0)
-        self.frame_slider.setMaximum(0)  # Updated dynamically
+        self.frame_slider.setMaximum(0)
         self.frame_slider.setValue(0)
         self.frame_slider_label = QLabel("Frame Index: 0")
         controls_layout.addWidget(QLabel("Select Frame Index"))
@@ -122,41 +122,33 @@ class MainWindow(QMainWindow):
 
     def load_cinemadng(self):
         try:
-            # Create a dialog with options for files or directory
             dialog = QFileDialog(self)
             dialog.setFileMode(QFileDialog.AnyFile)
             dialog.setNameFilter("DNG Files (*.dng);;All Files (*)")
-            dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+            dialog.setOption(QFileDialog.DontUseNativeDialog, False)
             dialog.setAcceptMode(QFileDialog.AcceptOpen)
-            dialog.setFileMode(QFileDialog.ExistingFiles)  # Allow multiple files
+            dialog.setFileMode(QFileDialog.ExistingFiles)
+            dialog.setOption(QFileDialog.ShowDirsOnly, False)
             if dialog.exec():
                 files = dialog.selectedFiles()
                 if files:
-                    logger.debug(f"Loading CinemaDNG from {files}")
-                    self.cinemadng = CinemaDNG(files)  # Pass list of files
-                    # Update frame slider range
+                    if len(files) == 1 and Path(files[0]).is_dir():
+                        logger.debug(f"Loading CinemaDNG from directory {files[0]}")
+                        self.cinemadng = CinemaDNG(files[0])
+                    else:
+                        logger.debug(f"Loading CinemaDNG from files {files}")
+                        self.cinemadng = CinemaDNG(files)
                     self.frame_slider.setMaximum(max(0, len(self.cinemadng.images) - 1))
                     self.frame_slider.setValue(len(self.cinemadng.images) // 2)
                     self.update_frame_label()
                     logger.info(f"Loaded {len(self.cinemadng.images)} DNG files")
                     self.image_label.setText(f"Loaded {len(self.cinemadng.images)} DNG files")
                 else:
-                    logger.warning("No files selected")
-                    self.image_label.setText("No files selected")
-            else:
-                # Try directory selection
-                dir_path = QFileDialog.getExistingDirectory(self, "Select CinemaDNG Directory")
-                if dir_path:
-                    logger.debug(f"Loading CinemaDNG from directory {dir_path}")
-                    self.cinemadng = CinemaDNG(dir_path)
-                    self.frame_slider.setMaximum(max(0, len(self.cinemadng.images) - 1))
-                    self.frame_slider.setValue(len(self.cinemadng.images) // 2)
-                    self.update_frame_label()
-                    logger.info(f"Loaded {len(self.cinemadng.images)} DNG files from directory")
-                    self.image_label.setText(f"Loaded {len(self.cinemadng.images)} DNG files from directory")
+                    logger.warning("No files or directory selected")
+                    self.image_label.setText("No files or directory selected")
         except Exception as e:
             logger.error(f"Failed to load CinemaDNG: {e}")
-            self.image_label.setText("Failed to load CinemaDNG")
+            self.image_label.setText(f"Failed to load CinemaDNG: {str(e)}")
 
     def run_denoise(self):
         try:
@@ -184,17 +176,14 @@ class MainWindow(QMainWindow):
                 iterations=iterations
             )
             logger.info("Denoising complete")
-            # Display denoised image
             if denoised is not None:
-                # Convert to uint8 and ensure RGB format
                 denoised = (denoised * 255).clip(0, 255).astype(np.uint8)
-                if denoised.ndim == 2:  # Grayscale to RGB
+                if denoised.ndim == 2:
                     denoised = np.stack([denoised] * 3, axis=-1)
                 height, width, channel = denoised.shape
                 qimg = QImage(denoised.data, width, height, width * channel, QImage.Format_RGB888)
                 self.image_label.setPixmap(QPixmap.fromImage(qimg).scaled(self.image_label.size(), Qt.KeepAspectRatio))
                 self.image_label.setText("")
-            # Save denoised images
             self.cinemadng.save_denoised(
                 self.output_dir,
                 frame_radius=frame_radius,
@@ -214,6 +203,9 @@ def main():
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
