@@ -38,8 +38,10 @@ try:
                 if not HAS_RAWPY:
                     logger.warning("Cannot load CinemaDNG files without rawpy")
                     return
-                # Load DNG files from a directory or single file
-                if self.file_path.is_dir():
+                # Handle single file, multiple files, or directory
+                if isinstance(file_path, (list, tuple)):
+                    self.images = [str(Path(f)) for f in file_path]
+                elif self.file_path.is_dir():
                     self.images = [str(f) for f in self.file_path.glob("*.dng")]
                 else:
                     self.images = [str(self.file_path)]
@@ -68,22 +70,21 @@ try:
                 logger.error(f"Failed to read images: {e}")
                 raise
 
-        def denoise(self, frame_radius: int = 3, spatial_median: int = 0):
-            logger.debug(f"Denoising with frame_radius={frame_radius}, spatial_median={spatial_median}")
+        def denoise(self, frame_idx: int, frame_radius: int = 3, spatial_median: int = 0, align: bool = True, winsize: int = 15, iterations: int = 3):
+            logger.debug(f"Denoising frame {frame_idx} with frame_radius={frame_radius}, spatial_median={spatial_median}, align={align}, winsize={winsize}, iterations={iterations}")
             try:
                 if not self.images:
                     logger.warning("No images loaded for denoising")
                     return None
                 denoiser = PreviewDenoiser()
-                idx = len(self.images) // 2  # Process middle frame as example
-                orig, denoised = denoiser.preview(self.images, idx, frame_radius, spatial_median)
+                orig, denoised = denoiser.preview(self.images, frame_idx, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
                 logger.info("Denoising completed")
                 return denoised
             except Exception as e:
                 logger.error(f"Denoising failed: {e}")
                 raise
 
-        def save_denoised(self, output_dir, frame_radius=3, spatial_median=0):
+        def save_denoised(self, output_dir, frame_radius=3, spatial_median=0, align=True, winsize=15, iterations=3):
             logger.debug(f"Saving denoised images to {output_dir}")
             try:
                 if not self.images:
@@ -91,7 +92,7 @@ try:
                     return
                 os.makedirs(output_dir, exist_ok=True)
                 exporter = StreamExporter()
-                exporter.export(self.images, output_dir, frame_radius, spatial_median)
+                exporter.export(self.images, output_dir, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
                 if not HAS_TIFFFILE:
                     logger.warning("Saved images as PNG due to missing tifffile")
                 else:
