@@ -17,18 +17,15 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Install Homebrew and gfortran
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install gfortran
+
       - name: Install dependencies
         run: |
           /usr/local/bin/pip3 install --upgrade pip
           /usr/local/bin/pip3 install -r requirements.txt
-          /usr/local/bin/pip3 install PyInstaller==5.13.0
-          /usr/local/bin/pip3 install rawpy==0.18.0 --no-binary :all:
-          /usr/local/bin/pip3 install tifffile>=2022.10.10 --no-binary :all:
-          /usr/local/bin/pip3 install PySide6==6.5.0
-          /usr/local/bin/pip3 install opencv-python==4.7.0.72
-          /usr/local/bin/pip3 install numpy==1.24.3
-          /usr/local/bin/pip3 install scipy==1.10.1
-          /usr/local/bin/pip3 install imageio==2.28.1
 
       - name: Debug rawpy and tifffile installation
         run: |
