@@ -14,8 +14,8 @@ libraw_data = []
 if os.path.exists(os.path.join(rawpy_path, "libraw")):
     libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
 
-# Collect tifffile data files
-tifffile_data = collect_data_files("tifffile", include_py_files=False)
+# Collect tifffile data and Python files
+tifffile_data = collect_data_files("tifffile", include_py_files=True)  # Include Python files
 
 # Hidden imports for all required modules
 hidden_imports = (
