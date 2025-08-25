@@ -34,6 +34,8 @@ jobs:
           ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
           echo "Checking for libraw:"
           ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
+          echo "Listing all dylib files in rawpy/libraw:"
+          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
           echo "Listing tifffile directory contents:"
           ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
 
@@ -59,7 +61,7 @@ jobs:
       - name: Inspect app bundle dependencies
         run: |
           echo "Checking dynamic libraries in TemporalDenoiser executable:"
-          otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser
+          otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser || echo "Executable not found"
           echo "Listing critical libraries in Resources:"
           ls -l dist/TemporalDenoiser.app/Contents/Resources/libpython3.10.dylib || echo "libpython3.10.dylib not found"
           ls -l dist/TemporalDenoiser.app/Contents/Resources/rawpy/libraw || echo "libraw not found"
