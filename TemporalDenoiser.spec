@@ -1,5 +1,6 @@
 # TemporalDenoiser.spec
 # PyInstaller spec file for macOS app bundle
+# -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
@@ -9,7 +10,7 @@ import os
 proj_root = Path(".").resolve()
 
 # Dynamically locate rawpy/libraw
-rawpy_path = "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy"
+rawpy_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy"
 libraw_data = []
 if os.path.exists(os.path.join(rawpy_path, "libraw")):
     libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
@@ -37,27 +38,23 @@ a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.')
+        ('/usr/local/opt/python@3.10/lib/libpython3.10.dylib', '.'),
+        ('/usr/local/opt/libraw/lib/libraw.20.dylib', 'rawpy/libraw'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore', 'PySide6/Qt/lib'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui', 'PySide6/Qt/lib'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets', 'PySide6/Qt/lib'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6.abi3.6.5.dylib', 'PySide6'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6qml.abi3.6.5.dylib', 'PySide6')
     ],
     datas=[
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/cv2/*', 'cv2'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/*', 'rawpy'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/imageio/*', 'imageio'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2/*', 'cv2'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/*', 'rawpy'),
+        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio/*', 'imageio'),
         ('temporal_denoiser/resources/app_icon.icns', '.')  # Correct icon path
-    ],
-    hiddenimports=[
-        'tifffile',
-        'PySide6.QtCore',
-        'PySide6.QtGui',
-        'PySide6.QtWidgets',
-        'cv2',
-        'scipy',
-        'numpy',
-        'rawpy',
-        'imageio'
-    ],
+    ] + libraw_data + tifffile_data,
+    hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -83,7 +80,7 @@ exe = EXE(
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=True,
-    target_arch=None,
+    target_arch='x86_64',  # Ensure Intel compatibility
     codesign_identity=None,
     entitlements_file=None
 )
@@ -103,5 +100,8 @@ app = BUNDLE(
     coll,
     name='TemporalDenoiser.app',
     icon='temporal_denoiser/resources/app_icon.icns',
-    bundle_identifier='com.gabriielangel.TemporalDenoiser'
+    bundle_identifier='com.gabriielangel.TemporalDenoiser',
+    info_plist={
+        'LSMinimumSystemVersion': '12.0'  # Ensure macOS 12 compatibility
+    }
 )
