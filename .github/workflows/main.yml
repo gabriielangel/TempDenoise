@@ -12,55 +12,51 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          cache: 'pip'
-
-      - name: Install Homebrew and gfortran
+      - name: Install Homebrew and dependencies
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew install gfortran
+          brew install gfortran python@3.10 libraw
+          echo "/usr/local/opt/python@3.10/bin" >> $GITHUB_PATH
+          echo "/usr/local/opt/python@3.10/libexec/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
-          python3.10 -m pip install --upgrade pip
-          python3.10 -m pip install -r requirements.txt
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install -r requirements.txt
 
-      - name: Debug rawpy, tifffile, and PySide6 installation
+      - name: Debug rawpy, tifffile, PySide6, and libraw
         run: |
+          echo "Python version and path:"
+          /usr/local/opt/python@3.10/bin/python3.10 --version
+          which python3.10
           echo "Listing rawpy directory contents:"
-          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
-          echo "Checking for libraw:"
-          ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
+          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
+          echo "Checking for libraw in rawpy:"
+          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
           echo "Listing all dylib files in rawpy/libraw:"
-          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
+          echo "Listing system libraw:"
+          ls -l /usr/local/opt/libraw/lib || echo "System libraw not found"
           echo "Listing tifffile directory contents:"
-          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
+          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
           echo "Listing PySide6 directory contents:"
-          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
+          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
           echo "Listing all dylib files in PySide6:"
-          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6 -name "*.dylib" || echo "No dylib files found in PySide6"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.dylib" || echo "No dylib files found in PySide6"
+          echo "Checking libpython3.10.dylib:"
+          ls -l /usr/local/opt/python@3.10/lib/libpython3.10.dylib || echo "libpython3.10.dylib not found"
 
       - name: Debug cinemadng.py
         run: |
           echo "Contents of cinemadng.py:"
           cat temporal_denoiser/cinemadng.py || echo "cinemadng.py not found"
 
-      - name: Debug libpython3.10.dylib path
-        run: |
-          echo "Checking for libpython3.10.dylib:"
-          ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib || echo "libpython3.10.dylib not found"
-          echo "Listing all dylib files in Python lib directory:"
-          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib -name "*.dylib"
-
       - name: Build with PyInstaller
         env:
-          PYTHONPATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages
-          LD_LIBRARY_PATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib
+          PYTHONPATH: /usr/local/opt/python@3.10/lib/python3.10/site-packages
+          LD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
         run: |
-          python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
+          /usr/local/opt/python@3.10/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
 
       - name: Inspect app bundle dependencies
         run: |
