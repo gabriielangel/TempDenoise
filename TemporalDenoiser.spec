@@ -36,13 +36,18 @@ block_cipher = None
 a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
-    binaries=[],
+    binaries=[
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw/libraw.19.dylib', 'rawpy/libraw'),  # Adjust version if needed
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/Qt/lib/*.dylib', 'PySide6/Qt/lib')
+    ],
     datas=[
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/cv2/*', 'cv2'),
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/*', 'rawpy'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/imageio/*', 'imageio')
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/imageio/*', 'imageio'),
+        ('temporal_denoiser/resources/app_icon.icns', '.')  # Correct icon path
     ],
     hiddenimports=[
         'tifffile',
@@ -81,7 +86,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=True,
     target_arch=None,
-    codesign_identity=None,
+    codesign_identity=None,  # No code signing, matching previous setup
     entitlements_file=None
 )
 
@@ -99,6 +104,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='TemporalDenoiser.app',
-    icon=None,
-    bundle_identifier=None
+    icon='temporal_denoiser/resources/app_icon.icns',  # Correct icon path
+    bundle_identifier='com.gabriielangel.TemporalDenoiser'
 )
