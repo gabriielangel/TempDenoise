@@ -22,7 +22,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install -r requirements.txt
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install "setuptools<81" -r requirements.txt
 
       - name: Debug Homebrew Python and dependencies
         run: |
@@ -43,6 +43,8 @@ jobs:
           find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
           echo "Listing system libraw:"
           ls -l /usr/local/opt/libraw/lib || echo "System libraw not found"
+          echo "Searching for libraw dylib:"
+          find /usr/local/opt/libraw/lib -name "libraw*.dylib" || echo "No libraw dylib found"
           echo "Listing tifffile directory contents:"
           ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
           echo "Listing PySide6 directory contents:"
