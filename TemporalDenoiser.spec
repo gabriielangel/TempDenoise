@@ -37,8 +37,7 @@ a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/Qt/lib/*.dylib', 'PySide6/Qt/lib')
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.')
     ],
     datas=[
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
