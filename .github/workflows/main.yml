@@ -44,7 +44,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          python3.10 -m PyInstaller --log-level DEBUG -F -n TemporalDenoiser --windowed --icon=temporal_denoiser/resources/app_icon.icns TemporalDenoiser.spec
+          python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
 
       - name: Inspect app bundle
         run: |
