@@ -43,6 +43,9 @@ jobs:
           cat temporal_denoiser/cinemadng.py || echo "cinemadng.py not found"
 
       - name: Build with PyInstaller
+        env:
+          PYTHONPATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages
+          LD_LIBRARY_PATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib
         run: |
           python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
 
