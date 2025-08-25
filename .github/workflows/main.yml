@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: 'pip'  # Cache pip dependencies for faster builds
+          cache: 'pip'
 
       - name: Install Homebrew and gfortran
         run: |
@@ -42,12 +42,30 @@ jobs:
           echo "Contents of cinemadng.py:"
           cat temporal_denoiser/cinemadng.py || echo "cinemadng.py not found"
 
+      - name: Debug libpython3.10.dylib path
+        run: |
+          echo "Checking for libpython3.10.dylib:"
+          ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib || echo "libpython3.10.dylib not found"
+          echo "Listing all dylib files in Python lib directory:"
+          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib -name "*.dylib"
+
       - name: Build with PyInstaller
         env:
           PYTHONPATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages
           LD_LIBRARY_PATH: /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib
         run: |
           python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
+
+      - name: Inspect app bundle dependencies
+        run: |
+          echo "Checking dynamic libraries in TemporalDenoiser executable:"
+          otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser
+          echo "Listing critical libraries in Resources:"
+          ls -l dist/TemporalDenoiser.app/Contents/Resources/libpython3.10.dylib || echo "libpython3.10.dylib not found"
+          ls -l dist/TemporalDenoiser.app/Contents/Resources/rawpy/libraw || echo "libraw not found"
+          ls -l dist/TemporalDenoiser.app/Contents/Resources/PySide6/Qt/lib || echo "Qt libraries not found"
+          echo "Checking for app_icon.icns:"
+          ls -l dist/TemporalDenoiser.app/Contents/Resources/app_icon.icns || echo "app_icon.icns not found"
 
       - name: Inspect app bundle
         run: |
