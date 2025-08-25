@@ -34,20 +34,37 @@ hidden_imports = (
 block_cipher = None
 
 a = Analysis(
-    [str(proj_root / "temporal_denoiser/__main__.py")],
-    pathex=[str(proj_root)],
+    ['temporal_denoiser/__main__.py'],
+    pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
-        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib", ".")
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.')
     ],
     datas=[
-        (str(proj_root / "temporal_denoiser/resources/app_icon.icns"), "resources"),
-        ("/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/PySide6/Qt/plugins", "PySide6/Qt/plugins"),
-    ] + libraw_data + tifffile_data,
-    hiddenimports=hidden_imports,
-    hookspath=[str(proj_root / "hooks")],
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/cv2/*', 'cv2'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/*', 'rawpy'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/imageio/*', 'imageio')
+    ],
+    hiddenimports=[
+        'tifffile',
+        'PySide6.QtCore',
+        'PySide6.QtGui',
+        'PySide6.QtWidgets',
+        'cv2',
+        'scipy',
+        'numpy',
+        'rawpy',
+        'imageio'
+    ],
+    hookspath=[],
+    hooksconfig={},
     runtime_hooks=[],
-    excludes=["distutils", "setuptools", "pkg_resources", "wheel", "pip", "jaraco"],
-    noarchive=False,
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -57,13 +74,17 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="TemporalDenoiser",
+    name='TemporalDenoiser',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
-    icon=str(proj_root / "temporal_denoiser/resources/app_icon.icns"),
+    disable_windowed_traceback=False,
+    argv_emulation=True,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None
 )
 
 coll = COLLECT(
@@ -74,19 +95,12 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="TemporalDenoiser",
+    name='TemporalDenoiser'
 )
 
 app = BUNDLE(
     coll,
-    name="TemporalDenoiser.app",
-    icon=str(proj_root / "temporal_denoiser/resources/app_icon.icns"),
-    bundle_identifier="com.temporaldenoiser.app",
-    info_plist={
-        "CFBundleName": "TemporalDenoiser",
-        "CFBundleShortVersionString": "1.0",
-        "CFBundleVersion": "1.0",
-        "NSHighResolutionCapable": "True",
-        "LSMinimumSystemVersion": "12.0",
-    },
+    name='TemporalDenoiser.app',
+    icon=None,
+    bundle_identifier=None
 )
