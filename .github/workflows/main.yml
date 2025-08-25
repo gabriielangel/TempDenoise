@@ -28,7 +28,7 @@ jobs:
           python3.10 -m pip install --upgrade pip
           python3.10 -m pip install -r requirements.txt
 
-      - name: Debug rawpy and tifffile installation
+      - name: Debug rawpy, tifffile, and PySide6 installation
         run: |
           echo "Listing rawpy directory contents:"
           ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
@@ -38,6 +38,10 @@ jobs:
           find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
           echo "Listing tifffile directory contents:"
           ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
+          echo "Listing PySide6 directory contents:"
+          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
+          echo "Listing all dylib files in PySide6:"
+          find /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6 -name "*.dylib" || echo "No dylib files found in PySide6"
 
       - name: Debug cinemadng.py
         run: |
