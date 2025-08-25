@@ -36,9 +36,7 @@ block_cipher = None
 a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
-    binaries=[
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.')
-    ],
+    binaries=[],
     datas=[
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
