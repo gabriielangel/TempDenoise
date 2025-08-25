@@ -1,4 +1,4 @@
-name: Build TemporalDenoiser 
+name: Build TemporalDenoiser
 
 on:
   push:
@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+          cache: 'pip'  # Cache pip dependencies for faster builds
 
       - name: Install Homebrew and gfortran
         run: |
@@ -24,17 +25,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          /usr/local/bin/pip3 install --upgrade pip
-          /usr/local/bin/pip3 install -r requirements.txt
+          python3.10 -m pip install --upgrade pip
+          python3.10 -m pip install -r requirements.txt
 
       - name: Debug rawpy and tifffile installation
         run: |
           echo "Listing rawpy directory contents:"
-          ls -R /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
+          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
           echo "Checking for libraw:"
-          ls -l /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
+          ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
           echo "Listing tifffile directory contents:"
-          ls -R /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
+          ls -R /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/tifffile || echo "tifffile directory not found"
 
       - name: Debug cinemadng.py
         run: |
@@ -43,7 +44,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          /usr/local/bin/pyinstaller --log-level DEBUG -F -n TemporalDenoiser --windowed --icon=temporal_denoiser/resources/app_icon.icns TemporalDenoiser.spec
+          python3.10 -m PyInstaller --log-level DEBUG -F -n TemporalDenoiser --windowed --icon=temporal_denoiser/resources/app_icon.icns TemporalDenoiser.spec
 
       - name: Inspect app bundle
         run: |
