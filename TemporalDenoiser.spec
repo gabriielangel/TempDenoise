@@ -38,7 +38,7 @@ a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
-        ('/usr/local/opt/python@3.10/lib/libpython3.10.dylib', '.'),
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
         ('/usr/local/opt/libraw/lib/libraw.20.dylib', 'rawpy/libraw'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore', 'PySide6/Qt/lib'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui', 'PySide6/Qt/lib'),
