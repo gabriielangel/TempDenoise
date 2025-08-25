@@ -38,7 +38,6 @@ a = Analysis(
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/rawpy/libraw/libraw.19.dylib', 'rawpy/libraw'),  # Adjust version if needed
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/PySide6/Qt/lib/*.dylib', 'PySide6/Qt/lib')
     ],
     datas=[
@@ -86,7 +85,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=True,
     target_arch=None,
-    codesign_identity=None,  # No code signing, matching previous setup
+    codesign_identity=None,
     entitlements_file=None
 )
 
@@ -104,6 +103,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='TemporalDenoiser.app',
-    icon='temporal_denoiser/resources/app_icon.icns',  # Correct icon path
+    icon='temporal_denoiser/resources/app_icon.icns',
     bundle_identifier='com.gabriielangel.TemporalDenoiser'
 )
