@@ -5,6 +5,7 @@
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 import os
+import glob
 
 # Project root directory
 proj_root = Path(".").resolve()
@@ -14,6 +15,13 @@ rawpy_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy"
 libraw_data = []
 if os.path.exists(os.path.join(rawpy_path, "libraw")):
     libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
+
+# Dynamically locate libraw dylib
+libraw_binaries = []
+libraw_path = "/usr/local/opt/libraw/lib"
+if os.path.exists(libraw_path):
+    libraw_files = glob.glob(os.path.join(libraw_path, "libraw*.dylib"))
+    libraw_binaries = [(f, "rawpy/libraw") for f in libraw_files]
 
 # Collect tifffile data files
 tifffile_data = collect_data_files("tifffile", include_py_files=False)
@@ -39,13 +47,12 @@ a = Analysis(
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
         ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
-        ('/usr/local/opt/libraw/lib/libraw.20.dylib', 'rawpy/libraw'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore', 'PySide6/Qt/lib'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui', 'PySide6/Qt/lib'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets', 'PySide6/Qt/lib'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6.abi3.6.5.dylib', 'PySide6'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6qml.abi3.6.5.dylib', 'PySide6')
-    ],
+    ] + libraw_binaries,
     datas=[
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
