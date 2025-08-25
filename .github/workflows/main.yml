@@ -24,11 +24,17 @@ jobs:
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install -r requirements.txt
 
-      - name: Debug rawpy, tifffile, PySide6, and libraw
+      - name: Debug Homebrew Python and dependencies
         run: |
-          echo "Python version and path:"
+          echo "Homebrew Python version and path:"
           /usr/local/opt/python@3.10/bin/python3.10 --version
           which python3.10
+          echo "Listing Homebrew Python lib directory:"
+          ls -l /usr/local/opt/python@3.10/lib || echo "Python lib directory not found"
+          echo "Searching for libpython3.10.dylib:"
+          find /usr/local/Cellar/python@3.10 -name "libpython3.10.dylib" || echo "libpython3.10.dylib not found in Cellar"
+          find /usr/local/opt -name "libpython3.10.dylib" || echo "libpython3.10.dylib not found in opt"
+          find /usr/local/lib -name "libpython3.10.dylib" || echo "libpython3.10.dylib not found in /usr/local/lib"
           echo "Listing rawpy directory contents:"
           ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
           echo "Checking for libraw in rawpy:"
@@ -43,8 +49,6 @@ jobs:
           ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
           echo "Listing all dylib files in PySide6:"
           find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.dylib" || echo "No dylib files found in PySide6"
-          echo "Checking libpython3.10.dylib:"
-          ls -l /usr/local/opt/python@3.10/lib/libpython3.10.dylib || echo "libpython3.10.dylib not found"
 
       - name: Debug cinemadng.py
         run: |
