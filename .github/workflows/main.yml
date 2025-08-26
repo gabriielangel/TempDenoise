@@ -22,7 +22,8 @@ jobs:
       - name: Install Python dependencies
         run: |
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install "setuptools<81" -r requirements.txt
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages "setuptools<81" PySide6>=6.5.0 tifffile>=2022.8.12 rawpy>=0.17.0 numpy scipy opencv-python imageio
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages -r requirements.txt
           /usr/local/opt/python@3.10/bin/python3.10 -m pip list --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
 
       - name: Debug Homebrew Python and dependencies
