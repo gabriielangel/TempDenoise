@@ -23,6 +23,7 @@ jobs:
         run: |
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install "setuptools<81" -r requirements.txt
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip list --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
 
       - name: Debug Homebrew Python and dependencies
         run: |
@@ -31,6 +32,8 @@ jobs:
           which python3.10
           echo "Listing Homebrew Python lib directory:"
           ls -l /usr/local/opt/python@3.10/lib || echo "Python lib directory not found"
+          echo "Listing site-packages:"
+          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages || echo "site-packages not found"
           echo "Searching for libpython3.10.dylib:"
           find /usr/local/Cellar/python@3.10 -name "libpython3.10.dylib" || echo "libpython3.10.dylib not found in Cellar"
           find /usr/local/opt -name "libpython3.10.dylib" || echo "libpython3.10.dylib not found in opt"
