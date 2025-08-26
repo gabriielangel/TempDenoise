@@ -6,6 +6,6 @@ rawpy>=0.17.0
 tifffile>=2022.8.12
 imageio==2.28.1
 PyInstaller==5.13.0
-# Optional for CinemaDNG: rawpy, tifffile
+macholib>=1.16
 
 
