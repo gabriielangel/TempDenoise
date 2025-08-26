@@ -56,6 +56,8 @@ jobs:
           find /usr/local/opt -name "QtCore.framework" || echo "QtCore.framework not found"
           find /usr/local/opt -name "QtGui.framework" || echo "QtGui.framework not found"
           find /usr/local/opt -name "QtWidgets.framework" || echo "QtWidgets.framework not found"
+          echo "Checking system Qt libraries:"
+          find /usr/local/lib -name "libQt*.dylib" || echo "No system Qt libraries found"
 
       - name: Debug cinemadng.py
         run: |
