@@ -25,11 +25,13 @@ libpython_binaries = [('/usr/local/Cellar/python@3.10/3.10.18/Frameworks/Python.
 # Dynamically locate PySide6 libraries
 pyside6_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6"
 pyside6_binaries = []
+pyside6_data = []
 if os.path.exists(pyside6_path):
     pyside6_binaries = [
         (f"{pyside6_path}/libpyside6.abi3.6.5.dylib", "PySide6"),
         (f"{pyside6_path}/libpyside6qml.abi3.6.5.dylib", "PySide6")
     ]
+    pyside6_data = [(f"{pyside6_path}/*", "PySide6")]
     qt_lib_path = f"{pyside6_path}/Qt/lib"
     if os.path.exists(qt_lib_path):
         pyside6_binaries.append((f"{qt_lib_path}/*", "PySide6/Qt/lib"))
@@ -38,6 +40,11 @@ if os.path.exists(pyside6_path):
 tifffile_data = []
 if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile"):
     tifffile_data = collect_data_files("tifffile", include_py_files=False)
+
+# Collect data for other packages
+rawpy_data = [(f"{rawpy_path}/*", "rawpy")] if os.path.exists(rawpy_path) else []
+cv2_data = [('/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2/*', 'cv2')] if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2") else []
+imageio_data = [('/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio/*', 'imageio')] if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio") else []
 
 # Hidden imports for all required modules
 hidden_imports = (
@@ -60,13 +67,8 @@ a = Analysis(
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=libpython_binaries + libraw_binaries + pyside6_binaries,
     datas=[
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2/*', 'cv2'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/*', 'rawpy'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio/*', 'imageio'),
         ('temporal_denoiser/resources/app_icon.icns', '.')  # Correct icon path
-    ] + libraw_data + tifffile_data,
+    ] + libraw_data + tifffile_data + pyside6_data + rawpy_data + cv2_data + imageio_data,
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
