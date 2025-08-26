@@ -10,8 +10,11 @@ import glob
 # Project root directory
 proj_root = Path(".").resolve()
 
+# Base site-packages path
+site_packages = "/usr/local/opt/python@3.10/lib/python3.10/site-packages"
+
 # Dynamically locate rawpy/libraw
-rawpy_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy"
+rawpy_path = f"{site_packages}/rawpy"
 libraw_data = []
 if os.path.exists(os.path.join(rawpy_path, "libraw")):
     libraw_data = [(os.path.join(rawpy_path, "libraw"), "rawpy/libraw")]
@@ -23,7 +26,7 @@ libraw_binaries = [('/usr/local/opt/libraw/lib/libraw.23.dylib', 'rawpy/libraw')
 libpython_binaries = [('/usr/local/Cellar/python@3.10/3.10.18/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib', '.')]
 
 # Dynamically locate PySide6 libraries
-pyside6_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6"
+pyside6_path = f"{site_packages}/PySide6"
 pyside6_binaries = []
 pyside6_data = []
 if os.path.exists(pyside6_path):
@@ -38,13 +41,15 @@ if os.path.exists(pyside6_path):
 
 # Collect tifffile data files
 tifffile_data = []
-if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile"):
+if os.path.exists(f"{site_packages}/tifffile"):
     tifffile_data = collect_data_files("tifffile", include_py_files=False)
 
 # Collect data for other packages
 rawpy_data = [(f"{rawpy_path}/*", "rawpy")] if os.path.exists(rawpy_path) else []
-cv2_data = [('/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2/*', 'cv2')] if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/cv2") else []
-imageio_data = [('/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio/*', 'imageio')] if os.path.exists("/usr/local/opt/python@3.10/lib/python3.10/site-packages/imageio") else []
+cv2_data = [(f"{site_packages}/cv2/*", "cv2")] if os.path.exists(f"{site_packages}/cv2") else []
+imageio_data = [(f"{site_packages}/imageio/*", "imageio")] if os.path.exists(f"{site_packages}/imageio") else []
+numpy_data = [(f"{site_packages}/numpy/*", "numpy")] if os.path.exists(f"{site_packages}/numpy") else []
+scipy_data = [(f"{site_packages}/scipy/*", "scipy")] if os.path.exists(f"{site_packages}/scipy") else []
 
 # Hidden imports for all required modules
 hidden_imports = (
@@ -68,7 +73,7 @@ a = Analysis(
     binaries=libpython_binaries + libraw_binaries + pyside6_binaries,
     datas=[
         ('temporal_denoiser/resources/app_icon.icns', '.')  # Correct icon path
-    ] + libraw_data + tifffile_data + pyside6_data + rawpy_data + cv2_data + imageio_data,
+    ] + libraw_data + tifffile_data + pyside6_data + rawpy_data + cv2_data + imageio_data + numpy_data + scipy_data,
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
