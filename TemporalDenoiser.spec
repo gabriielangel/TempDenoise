@@ -30,7 +30,7 @@ pyside6_path = f"{site_packages}/PySide6"
 pyside6_binaries = []
 pyside6_data = []
 if os.path.exists(pyside6_path):
-    # Use glob to find libpyside6 and libpyside6qml dylibs dynamically
+    # Include PySide6 dylibs dynamically
     for dylib in glob.glob(f"{pyside6_path}/libpyside6*.dylib"):
         pyside6_binaries.append((dylib, "PySide6"))
     for dylib in glob.glob(f"{pyside6_path}/libpyside6qml*.dylib"):
@@ -38,7 +38,13 @@ if os.path.exists(pyside6_path):
     pyside6_data = [(f"{pyside6_path}/*", "PySide6")]
     qt_lib_path = f"{pyside6_path}/Qt/lib"
     if os.path.exists(qt_lib_path):
-        pyside6_binaries.append((f"{qt_lib_path}/*", "PySide6/Qt/lib"))
+        # Include only required Qt frameworks
+        for framework in ['QtCore.framework/Versions/Current/QtCore', 
+                         'QtGui.framework/Versions/Current/QtGui', 
+                         'QtWidgets.framework/Versions/Current/QtWidgets']:
+            framework_path = f"{qt_lib_path}/{framework}"
+            if os.path.exists(framework_path):
+                pyside6_binaries.append((framework_path, "PySide6/Qt/lib"))
 
 # Collect tifffile data files
 tifffile_data = []
@@ -79,7 +85,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['PySide6.QtWebEngineCore'],  # Exclude QtWebEngineCore
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
