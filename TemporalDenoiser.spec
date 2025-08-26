@@ -23,6 +23,21 @@ if os.path.exists(libraw_path):
     libraw_files = glob.glob(os.path.join(libraw_path, "libraw*.dylib"))
     libraw_binaries = [(f, "rawpy/libraw") for f in libraw_files]
 
+# Dynamically locate PySide6 Qt frameworks
+pyside6_path = "/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6"
+qt_binaries = [
+    (f"{pyside6_path}/Qt/lib/QtCore.framework/Versions/A/QtCore", "PySide6/Qt/lib"),
+    (f"{pyside6_path}/Qt/lib/QtGui.framework/Versions/A/QtGui", "PySide6/Qt/lib"),
+    (f"{pyside6_path}/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets", "PySide6/Qt/lib")
+]
+# Fallback to include entire Qt/lib directory if frameworks are missing
+qt_lib_path = f"{pyside6_path}/Qt/lib"
+if os.path.exists(qt_lib_path):
+    qt_binaries.append((f"{qt_lib_path}/*", "PySide6/Qt/lib"))
+else:
+    qt_binaries.append((f"{pyside6_path}/libpyside6.abi3.6.5.dylib", "PySide6"))
+    qt_binaries.append((f"{pyside6_path}/libpyside6qml.abi3.6.5.dylib", "PySide6"))
+
 # Collect tifffile data files
 tifffile_data = collect_data_files("tifffile", include_py_files=False)
 
@@ -46,13 +61,8 @@ a = Analysis(
     ['temporal_denoiser/__main__.py'],
     pathex=['/Users/runner/work/TempDenoise/TempDenoise'],
     binaries=[
-        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtCore.framework/Versions/A/QtCore', 'PySide6/Qt/lib'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtGui.framework/Versions/A/QtGui', 'PySide6/Qt/lib'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib/QtWidgets.framework/Versions/A/QtWidgets', 'PySide6/Qt/lib'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6.abi3.6.5.dylib', 'PySide6'),
-        ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/libpyside6qml.abi3.6.5.dylib', 'PySide6')
-    ] + libraw_binaries,
+        ('/Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/libpython3.10.dylib', '.')
+    ] + libraw_binaries + qt_binaries,
     datas=[
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/tifffile/*', 'tifffile'),
         ('/usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/*', 'PySide6'),
