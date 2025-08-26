@@ -30,10 +30,11 @@ pyside6_path = f"{site_packages}/PySide6"
 pyside6_binaries = []
 pyside6_data = []
 if os.path.exists(pyside6_path):
-    pyside6_binaries = [
-        (f"{pyside6_path}/libpyside6.abi3.6.5.dylib", "PySide6"),
-        (f"{pyside6_path}/libpyside6qml.abi3.6.5.dylib", "PySide6")
-    ]
+    # Use glob to find libpyside6 and libpyside6qml dylibs dynamically
+    for dylib in glob.glob(f"{pyside6_path}/libpyside6*.dylib"):
+        pyside6_binaries.append((dylib, "PySide6"))
+    for dylib in glob.glob(f"{pyside6_path}/libpyside6qml*.dylib"):
+        pyside6_binaries.append((dylib, "PySide6"))
     pyside6_data = [(f"{pyside6_path}/*", "PySide6")]
     qt_lib_path = f"{pyside6_path}/Qt/lib"
     if os.path.exists(qt_lib_path):
