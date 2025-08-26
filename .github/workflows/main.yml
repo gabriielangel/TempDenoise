@@ -51,6 +51,11 @@ jobs:
           ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
           echo "Listing all dylib files in PySide6:"
           find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.dylib" || echo "No dylib files found in PySide6"
+          echo "Searching for Qt frameworks in PySide6:"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.framework" || echo "No Qt frameworks found in PySide6"
+          find /usr/local/opt -name "QtCore.framework" || echo "QtCore.framework not found"
+          find /usr/local/opt -name "QtGui.framework" || echo "QtGui.framework not found"
+          find /usr/local/opt -name "QtWidgets.framework" || echo "QtWidgets.framework not found"
 
       - name: Debug cinemadng.py
         run: |
