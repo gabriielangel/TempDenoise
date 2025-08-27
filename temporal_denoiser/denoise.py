@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os  # Added missing import
 import logging
 from pathlib import Path
 
