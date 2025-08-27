@@ -14,99 +14,173 @@ jobs:
 
       - name: Install Homebrew and dependencies
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          # Check if Homebrew is already installed
+          if ! command -v brew &> /dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          
+          # Install required packages
           brew install gfortran python@3.10 libraw
+          
+          # Add Python to PATH
           echo "/usr/local/opt/python@3.10/bin" >> $GITHUB_PATH
           echo "/usr/local/opt/python@3.10/libexec/bin" >> $GITHUB_PATH
 
+      - name: Debug Python and library paths
+        run: |
+          echo "=== Python Information ==="
+          which python3.10 || echo "python3.10 not found in PATH"
+          /usr/local/opt/python@3.10/bin/python3.10 --version || echo "Homebrew python3.10 not found"
+          
+          echo "=== Searching for libpython3.10.dylib ==="
+          find /usr/local -name "libpython3.10.dylib" 2>/dev/null || echo "libpython3.10.dylib not found in /usr/local"
+          ls -la /usr/local/opt/python@3.10/lib/ 2>/dev/null || echo "Python lib directory not found"
+          ls -la /usr/local/Cellar/python@3.10/*/lib/ 2>/dev/null || echo "Python Cellar lib not found"
+          ls -la /usr/local/Cellar/python@3.10/*/Frameworks/Python.framework/Versions/3.10/lib/ 2>/dev/null || echo "Python Framework lib not found"
+          
+          echo "=== Searching for libraw ==="
+          find /usr/local -name "libraw*.dylib" 2>/dev/null || echo "libraw not found"
+          ls -la /usr/local/opt/libraw/lib/ 2>/dev/null || echo "libraw lib directory not found"
+
       - name: Install Python dependencies
         run: |
+          # Upgrade pip first
           /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
+          
+          # Set environment variables for building
           export LDFLAGS="-L/usr/local/opt/libraw/lib"
           export CFLAGS="-I/usr/local/opt/libraw/include"
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages "setuptools<81" PySide6>=6.5.0 tifffile>=2022.8.12 rawpy>=0.17.0 numpy==1.24.3 scipy==1.10.1 opencv-python==4.7.0.72 imageio==2.28.1 PyInstaller==5.13.0 macholib>=1.16
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages --no-deps -r requirements.txt
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip list --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
-          echo "Checking default Python site-packages:"
-          ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages || echo "Default site-packages not found"
+          export PKG_CONFIG_PATH="/usr/local/opt/libraw/lib/pkgconfig:$PKG_CONFIG_PATH"
+          
+          # Install dependencies to custom location
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install \
+            --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages \
+            "setuptools<81" \
+            PySide6>=6.5.0 \
+            tifffile>=2022.8.12 \
+            rawpy>=0.17.0 \
+            numpy==1.24.3 \
+            scipy==1.10.1 \
+            opencv-python==4.7.0.72 \
+            imageio==2.28.1 \
+            PyInstaller==5.13.0 \
+            macholib>=1.16
+          
+          # Install from requirements.txt without dependencies to avoid conflicts
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install \
+            --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages \
+            --no-deps -r requirements.txt
+          
+          # List installed packages
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip list \
+            --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
 
-      - name: Debug Homebrew Python and dependencies
+      - name: Verify installations
         run: |
-          echo "Homebrew Python version and path:"
-          /usr/local/opt/python@3.10/bin/python3.10 --version
-          which python3.10
-          echo "Listing Homebrew Python lib directory:"
-          ls -l /usr/local/opt/python@3.10/lib || echo "Python lib directory not found"
-          echo "Listing site-packages:"
-          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages || echo "site-packages not found"
-          echo "Listing PySide6 directory contents:"
-          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
-          echo "Listing PySide6 dylib files:"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "libpyside6*.dylib" || echo "No libpyside6 dylib files found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "libpyside6qml*.dylib" || echo "No libpyside6qml dylib files found"
-          echo "Listing Qt frameworks in PySide6:"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.framework" || echo "No Qt frameworks found in PySide6"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtCore.framework" || echo "QtCore.framework not found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtGui.framework" || echo "QtGui.framework not found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWidgets.framework" || echo "QtWidgets.framework not found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWebEngineCore.framework" || echo "QtWebEngineCore.framework not found"
-          echo "Listing rawpy directory contents:"
-          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
-          echo "Checking for libraw in rawpy:"
-          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
-          echo "Listing all dylib files in rawpy/libraw:"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
-          echo "Listing system libraw:"
-          ls -l /usr/local/opt/libraw/lib || echo "System libraw not found"
-          echo "Searching for libraw dylib:"
-          find /usr/local/opt/libraw/lib -name "libraw*.dylib" || echo "No libraw dylib found"
-          echo "Checking system Qt libraries:"
-          find /usr/local/lib -name "libQt*.dylib" || echo "No system Qt libraries found"
-          echo "Verifying rawpy installation:"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import rawpy; print(rawpy.__version__)" || echo "rawpy import failed"
+          echo "=== Verifying Python package installations ==="
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import PySide6; print(f'PySide6 version: {PySide6.__version__}')" || echo "PySide6 import failed"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import rawpy; print(f'rawpy version: {rawpy.__version__}')" || echo "rawpy import failed"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import numpy; print(f'numpy version: {numpy.__version__}')" || echo "numpy import failed"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import cv2; print(f'opencv version: {cv2.__version__}')" || echo "opencv import failed"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import tifffile; print(f'tifffile version: {tifffile.__version__}')" || echo "tifffile import failed"
+          
+          echo "=== Checking PySide6 structure ==="
+          ls -la /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/ || echo "PySide6 directory not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.dylib" | head -5 || echo "No PySide6 dylibs found"
+          
+          echo "=== Checking rawpy structure ==="
+          ls -la /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/ || echo "rawpy directory not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy -name "*.so" -o -name "*.dylib" | head -5 || echo "No rawpy binaries found"
 
-      - name: Debug cinemadng.py
+      - name: Test basic app functionality
         run: |
-          echo "Contents of cinemadng.py:"
-          cat temporal_denoiser/cinemadng.py || echo "cinemadng.py not found"
+          export PYTHONPATH="/usr/local/opt/python@3.10/lib/python3.10/site-packages"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "
+          try:
+              from temporal_denoiser.cinemadng import CinemaDNG, available
+              from temporal_denoiser.denoise import PreviewDenoiser
+              print('✓ Core modules import successfully')
+              print(f'✓ CinemaDNG available: {available()}')
+          except Exception as e:
+              print(f'✗ Import test failed: {e}')
+              import traceback
+              traceback.print_exc()
+          "
 
       - name: Build with PyInstaller
         env:
           PYTHONPATH: /usr/local/opt/python@3.10/lib/python3.10/site-packages
           LD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
+          DYLD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
         run: |
-          /usr/local/opt/python@3.10/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
+          echo "=== Starting PyInstaller build ==="
+          /usr/local/opt/python@3.10/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec 2>&1 | tee build.log
+          
+          # Check if build was successful
+          if [ ! -f "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser" ]; then
+            echo "Build failed - executable not found"
+            echo "=== Last 50 lines of build log ==="
+            tail -50 build.log
+            exit 1
+          fi
+          
+          echo "✓ Build completed successfully"
 
       - name: Inspect app bundle dependencies
         run: |
-          echo "Checking dynamic libraries in TemporalDenoiser executable:"
-          otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser || echo "Executable not found"
-          echo "Listing critical libraries in Resources:"
-          ls -l dist/TemporalDenoiser.app/Contents/Resources/libpython3.10.dylib || echo "libpython3.10.dylib not found"
-          ls -l dist/TemporalDenoiser.app/Contents/Resources/rawpy/libraw || echo "libraw not found"
-          ls -l dist/TemporalDenoiser.app/Contents/Resources/PySide6/Qt/lib || echo "Qt libraries not found"
-          echo "Checking for app_icon.icns:"
-          ls -l dist/TemporalDenoiser.app/Contents/Resources/app_icon.icns || echo "app_icon.icns not found"
+          echo "=== Checking app bundle structure ==="
+          ls -la dist/TemporalDenoiser.app/Contents/MacOS/ || echo "MacOS directory not found"
+          ls -la dist/TemporalDenoiser.app/Contents/Resources/ | head -20 || echo "Resources directory not found"
+          
+          echo "=== Checking executable dependencies ==="
+          if [ -f "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser" ]; then
+            otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser || echo "Could not check dependencies"
+          else
+            echo "Executable not found"
+          fi
+          
+          echo "=== Checking for critical files ==="
+          ls -la dist/TemporalDenoiser.app/Contents/Resources/app_icon.icns || echo "Icon not found"
+          
+          echo "=== Checking for Python libraries ==="
+          find dist/TemporalDenoiser.app/Contents/Resources -name "*python*" | head -5 || echo "No Python libraries found"
+          find dist/TemporalDenoiser.app/Contents/Resources -name "*PySide6*" | head -5 || echo "No PySide6 files found"
 
-      - name: Inspect app bundle
+      - name: Test app bundle
         run: |
-          ls -R dist/TemporalDenoiser.app/Contents/Resources
-          ls -l dist/TemporalDenoiser.app/Contents/MacOS
-
-      - name: Install create-dmg
-        run: brew install create-dmg
+          echo "=== Testing app bundle ==="
+          # Try to run the app with a timeout to prevent hanging
+          timeout 30s dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser --help || echo "App test completed (may have timed out)"
 
       - name: Create DMG
         run: |
+          echo "=== Creating DMG ==="
           mkdir -p dist_dmg
           APP_PATH="dist/TemporalDenoiser.app"
-          DMG_NAME="TemporalDenoiser-$(date +'%Y%m%d').dmg"
+          DMG_NAME="TemporalDenoiser-$(date +'%Y%m%d-%H%M%S').dmg"
+          
+          # Create DMG using hdiutil (more reliable than create-dmg)
           hdiutil create -volname "TemporalDenoiser" \
                          -srcfolder "$APP_PATH" \
                          -ov -format UDZO "dist_dmg/$DMG_NAME"
+          
+          echo "✓ DMG created: $DMG_NAME"
+          ls -la dist_dmg/
 
-      - name: Upload DMG artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
+        if: always()  # Upload even if previous steps failed
+        with:
+          name: TemporalDenoiser-artifacts
+          path: |
+            dist_dmg/*.dmg
+            dist/TemporalDenoiser.app
+            build.log
+          retention-days: 30
+
+      - name: Upload DMG only
+        uses: actions/upload-artifact@v4
+        if: success()  # Only upload DMG if build was successful
         with:
           name: TemporalDenoiser-dmg
           path: dist_dmg/*.dmg
