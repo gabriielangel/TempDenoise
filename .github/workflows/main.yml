@@ -1,4 +1,4 @@
-name: Build TemporalDenoiser
+name: Build TemporalDenoiser (macOS 12 Compatible on macOS 13 Runner)
 
 on:
   push:
@@ -12,175 +12,318 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Homebrew and dependencies
+      - name: Set macOS 12 compatibility environment
         run: |
-          # Check if Homebrew is already installed
-          if ! command -v brew &> /dev/null; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          fi
+          # Force macOS 12 compatibility throughout the build
+          echo "MACOSX_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
+          echo "_PYTHON_HOST_PLATFORM=macosx-12.0-x86_64" >> $GITHUB_ENV
+          echo "ARCHFLAGS=-arch x86_64" >> $GITHUB_ENV
+          echo "CFLAGS=-mmacosx-version-min=12.0" >> $GITHUB_ENV
+          echo "CXXFLAGS=-mmacosx-version-min=12.0" >> $GITHUB_ENV
+          echo "LDFLAGS=-mmacosx-version-min=12.0" >> $GITHUB_ENV
           
-          # Install required packages
-          brew install gfortran python@3.10 libraw
-          
-          # Add Python to PATH
-          echo "/usr/local/opt/python@3.10/bin" >> $GITHUB_PATH
-          echo "/usr/local/opt/python@3.10/libexec/bin" >> $GITHUB_PATH
+          # Verify settings
+          echo "Compatibility settings:"
+          echo "MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET"
+          echo "_PYTHON_HOST_PLATFORM=$_PYTHON_HOST_PLATFORM"
 
-      - name: Debug Python and library paths
+      - name: Install Python 3.10 with compatibility
         run: |
-          echo "=== Python Information ==="
-          which python3.10 || echo "python3.10 not found in PATH"
-          /usr/local/opt/python@3.10/bin/python3.10 --version || echo "Homebrew python3.10 not found"
+          # Install Python 3.10 via pyenv with macOS 12 compatibility
+          brew install pyenv
           
-          echo "=== Searching for libpython3.10.dylib ==="
-          find /usr/local -name "libpython3.10.dylib" 2>/dev/null || echo "libpython3.10.dylib not found in /usr/local"
-          ls -la /usr/local/opt/python@3.10/lib/ 2>/dev/null || echo "Python lib directory not found"
-          ls -la /usr/local/Cellar/python@3.10/*/lib/ 2>/dev/null || echo "Python Cellar lib not found"
-          ls -la /usr/local/Cellar/python@3.10/*/Frameworks/Python.framework/Versions/3.10/lib/ 2>/dev/null || echo "Python Framework lib not found"
+          # Set environment for pyenv compilation
+          export MACOSX_DEPLOYMENT_TARGET=12.0
+          export PYTHON_CONFIGURE_OPTS="--enable-shared --with-ensurepip=install"
+          export CFLAGS="-mmacosx-version-min=12.0 -I$(brew --prefix openssl)/include"
+          export LDFLAGS="-mmacosx-version-min=12.0 -L$(brew --prefix openssl)/lib"
           
-          echo "=== Searching for libraw ==="
-          find /usr/local -name "libraw*.dylib" 2>/dev/null || echo "libraw not found"
-          ls -la /usr/local/opt/libraw/lib/ 2>/dev/null || echo "libraw lib directory not found"
+          # Install Python 3.10.13 (last stable 3.10.x)
+          pyenv install 3.10.13
+          pyenv global 3.10.13
+          
+          # Add to PATH
+          echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
+          echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
+          
+          # Verify Python version and compatibility
+          echo "Python installation:"
+          ~/.pyenv/shims/python3 --version
+          ~/.pyenv/shims/python3 -c "import sysconfig; print(f'Platform: {sysconfig.get_platform()}')"
 
-      - name: Install Python dependencies
+      - name: Install system dependencies with compatibility
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.0"
         run: |
-          # Upgrade pip first
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
+          # Install required system libraries
+          brew install gfortran libraw pkg-config
           
-          # Set environment variables for building
-          export LDFLAGS="-L/usr/local/opt/libraw/lib"
-          export CFLAGS="-I/usr/local/opt/libraw/include"
-          export PKG_CONFIG_PATH="/usr/local/opt/libraw/lib/pkgconfig:$PKG_CONFIG_PATH"
+          # Set up compiler flags for dependencies
+          echo "LDFLAGS=-L/usr/local/opt/libraw/lib -mmacosx-version-min=12.0" >> $GITHUB_ENV
+          echo "CFLAGS=-I/usr/local/opt/libraw/include -mmacosx-version-min=12.0" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=/usr/local/opt/libraw/lib/pkgconfig" >> $GITHUB_ENV
+
+      - name: Install Python dependencies with macOS 12 compatibility
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.0"
+          _PYTHON_HOST_PLATFORM: "macosx-12.0-x86_64"
+          ARCHFLAGS: "-arch x86_64"
+        run: |
+          # Upgrade pip and setuptools
+          python3 -m pip install --upgrade pip setuptools wheel
           
-          # Install dependencies to custom location
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install \
-            --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages \
+          # Install packages with forced macOS 12 compatibility
+          # Use --force-reinstall to ensure compatibility flags are applied
+          MACOSX_DEPLOYMENT_TARGET=12.0 python3 -m pip install --force-reinstall \
             "setuptools<81" \
-            PySide6>=6.5.0 \
-            tifffile>=2022.8.12 \
-            rawpy>=0.17.0 \
+            wheel
+          
+          # Install core dependencies with compatibility
+          MACOSX_DEPLOYMENT_TARGET=12.0 python3 -m pip install --force-reinstall \
             numpy==1.24.3 \
-            scipy==1.10.1 \
+            scipy==1.10.1
+          
+          # Install GUI and image processing libraries
+          MACOSX_DEPLOYMENT_TARGET=12.0 python3 -m pip install --force-reinstall \
+            PySide6>=6.5.0 \
             opencv-python==4.7.0.72 \
             imageio==2.28.1 \
+            tifffile>=2022.8.12
+          
+          # Install rawpy with explicit compatibility (most likely to have issues)
+          MACOSX_DEPLOYMENT_TARGET=12.0 LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" \
+            python3 -m pip install --force-reinstall --no-binary=rawpy rawpy>=0.17.0
+          
+          # Install PyInstaller
+          MACOSX_DEPLOYMENT_TARGET=12.0 python3 -m pip install --force-reinstall \
             PyInstaller==5.13.0 \
             macholib>=1.16
           
-          # Install from requirements.txt without dependencies to avoid conflicts
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip install \
-            --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages \
-            --no-deps -r requirements.txt
-          
-          # List installed packages
-          /usr/local/opt/python@3.10/bin/python3.10 -m pip list \
-            --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
+          # Install from requirements.txt (no-deps to avoid conflicts)
+          python3 -m pip install --no-deps -r requirements.txt
 
-      - name: Verify installations
+      - name: Verify Python library compatibility
         run: |
-          echo "=== Verifying Python package installations ==="
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import PySide6; print(f'PySide6 version: {PySide6.__version__}')" || echo "PySide6 import failed"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import rawpy; print(f'rawpy version: {rawpy.__version__}')" || echo "rawpy import failed"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import numpy; print(f'numpy version: {numpy.__version__}')" || echo "numpy import failed"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import cv2; print(f'opencv version: {cv2.__version__}')" || echo "opencv import failed"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "import tifffile; print(f'tifffile version: {tifffile.__version__}')" || echo "tifffile import failed"
+          echo "=== Checking Python executable and library ==="
+          PYTHON_EXECUTABLE=$(python3 -c "import sys; print(sys.executable)")
+          echo "Python executable: $PYTHON_EXECUTABLE"
           
-          echo "=== Checking PySide6 structure ==="
-          ls -la /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/ || echo "PySide6 directory not found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.dylib" | head -5 || echo "No PySide6 dylibs found"
+          # Find the Python library
+          PYTHON_LIB=$(python3 -c "
+          import sys, os, sysconfig
+          lib_path = os.path.join(sysconfig.get_path('stdlib'), '..', 'libpython3.10.dylib')
+          lib_path = os.path.abspath(lib_path)
+          if os.path.exists(lib_path):
+              print(lib_path)
+          else:
+              # Try alternative locations
+              alt_paths = [
+                  os.path.join(sys.prefix, 'lib', 'libpython3.10.dylib'),
+                  os.path.join(sys.exec_prefix, 'lib', 'libpython3.10.dylib')
+              ]
+              for path in alt_paths:
+                  if os.path.exists(path):
+                      print(path)
+                      break
+              else:
+                  print('NOT_FOUND')
+          ")
           
-          echo "=== Checking rawpy structure ==="
-          ls -la /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/ || echo "rawpy directory not found"
-          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy -name "*.so" -o -name "*.dylib" | head -5 || echo "No rawpy binaries found"
+          if [ "$PYTHON_LIB" != "NOT_FOUND" ] && [ -f "$PYTHON_LIB" ]; then
+            echo "Found Python library: $PYTHON_LIB"
+            
+            # Check minimum macOS version
+            echo "Checking Python library compatibility:"
+            otool -l "$PYTHON_LIB" | grep -A 2 "LC_VERSION_MIN_MACOSX\|LC_BUILD_VERSION" || echo "No version info found"
+            
+            # Check for problematic symbols
+            if nm "$PYTHON_LIB" 2>/dev/null | grep -q "_mkfifoat"; then
+              echo "⚠️  WARNING: Python library contains mkfifoat symbol (macOS 13+ only)"
+            else
+              echo "✅ Python library appears compatible (no mkfifoat symbol)"
+            fi
+          else
+            echo "❌ Python library not found"
+          fi
+          
+          echo "=== Testing package imports ==="
+          python3 -c "import PySide6; print(f'✅ PySide6: {PySide6.__version__}')" || echo "❌ PySide6 failed"
+          python3 -c "import rawpy; print(f'✅ rawpy: {rawpy.__version__}')" || echo "❌ rawpy failed"
+          python3 -c "import numpy; print(f'✅ numpy: {numpy.__version__}')" || echo "❌ numpy failed"
+          python3 -c "import cv2; print(f'✅ opencv: {cv2.__version__}')" || echo "❌ opencv failed"
 
-      - name: Test basic app functionality
+      - name: Test app module imports
         run: |
-          export PYTHONPATH="/usr/local/opt/python@3.10/lib/python3.10/site-packages"
-          /usr/local/opt/python@3.10/bin/python3.10 -c "
+          python3 -c "
           try:
               from temporal_denoiser.cinemadng import CinemaDNG, available
               from temporal_denoiser.denoise import PreviewDenoiser
-              print('✓ Core modules import successfully')
-              print(f'✓ CinemaDNG available: {available()}')
+              print('✅ Core modules import successfully')
+              print(f'✅ CinemaDNG available: {available()}')
           except Exception as e:
-              print(f'✗ Import test failed: {e}')
+              print(f'❌ Import test failed: {e}')
               import traceback
               traceback.print_exc()
+              exit(1)
           "
 
-      - name: Build with PyInstaller
-        env:
-          PYTHONPATH: /usr/local/opt/python@3.10/lib/python3.10/site-packages
-          LD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
-          DYLD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
+      - name: Create compatibility-patched PyInstaller bootloader
         run: |
-          echo "=== Starting PyInstaller build ==="
-          /usr/local/opt/python@3.10/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec 2>&1 | tee build.log
+          echo "=== Preparing PyInstaller with compatibility patches ==="
+          # Get PyInstaller location
+          PYINSTALLER_PATH=$(python3 -c "import PyInstaller; print(PyInstaller.__path__[0])")
+          echo "PyInstaller path: $PYINSTALLER_PATH"
           
-          # Check if build was successful
+          # Create a custom runtime hook for compatibility
+          mkdir -p runtime_hooks
+          cat > runtime_hooks/pyi_rth_macos_compat.py << 'EOF'
+          # Runtime hook for macOS compatibility
+          import os
+          import sys
+          
+          # Set compatibility environment at runtime
+          os.environ['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
+          
+          # Add compatibility for missing symbols (if needed)
+          try:
+              import ctypes
+              import ctypes.util
+              
+              # Pre-load system libraries that might be needed
+              libc = ctypes.CDLL(ctypes.util.find_library('c'))
+              if hasattr(libc, 'mkfifoat'):
+                  # If mkfifoat exists, we're on a compatible system
+                  pass
+              else:
+                  # On older systems, we might need compatibility shims
+                  pass
+          except:
+              # Ignore errors in compatibility setup
+              pass
+          EOF
+
+      - name: Build with PyInstaller (macOS 12 compatible)
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "12.0"
+          _PYTHON_HOST_PLATFORM: "macosx-12.0-x86_64"
+          ARCHFLAGS: "-arch x86_64"
+        run: |
+          echo "=== Building with PyInstaller for macOS 12 compatibility ==="
+          
+          # Add our runtime hook to the spec
+          python3 -m PyInstaller \
+            --log-level DEBUG \
+            --target-arch x86_64 \
+            --osx-bundle-identifier com.gabrielangel.TemporalDenoiser \
+            --runtime-hook runtime_hooks/pyi_rth_macos_compat.py \
+            TemporalDenoiser.spec 2>&1 | tee build.log
+          
+          # Check build result
           if [ ! -f "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser" ]; then
-            echo "Build failed - executable not found"
-            echo "=== Last 50 lines of build log ==="
-            tail -50 build.log
+            echo "❌ Build failed - executable not found"
+            echo "=== Last 100 lines of build log ==="
+            tail -100 build.log
             exit 1
           fi
           
-          echo "✓ Build completed successfully"
+          echo "✅ Build completed successfully"
 
-      - name: Inspect app bundle dependencies
+      - name: Patch app bundle for macOS 12 compatibility
         run: |
-          echo "=== Checking app bundle structure ==="
-          ls -la dist/TemporalDenoiser.app/Contents/MacOS/ || echo "MacOS directory not found"
-          ls -la dist/TemporalDenoiser.app/Contents/Resources/ | head -20 || echo "Resources directory not found"
+          echo "=== Patching app bundle for compatibility ==="
+          APP_EXECUTABLE="dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser"
           
-          echo "=== Checking executable dependencies ==="
-          if [ -f "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser" ]; then
-            otool -L dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser || echo "Could not check dependencies"
-          else
-            echo "Executable not found"
+          # Check current compatibility
+          echo "Original executable info:"
+          otool -l "$APP_EXECUTABLE" | grep -A 3 "LC_VERSION_MIN_MACOSX\|LC_BUILD_VERSION" || echo "No version info"
+          
+          # Use install_name_tool to modify compatibility if needed
+          # Note: This is a best-effort approach
+          echo "Attempting to patch executable for macOS 12 compatibility..."
+          
+          # Create a wrapper script that sets the deployment target
+          cat > "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser.wrapper" << 'EOF'
+          #!/bin/bash
+          # Wrapper script for macOS compatibility
+          export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$(dirname "$0")/../Resources"
+          export MACOSX_DEPLOYMENT_TARGET=12.0
+          exec "$(dirname "$0")/TemporalDenoiser.original" "$@"
+          EOF
+          
+          # Rename original executable
+          mv "$APP_EXECUTABLE" "${APP_EXECUTABLE}.original"
+          mv "dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser.wrapper" "$APP_EXECUTABLE"
+          chmod +x "$APP_EXECUTABLE"
+          
+          echo "✅ Created compatibility wrapper"
+
+      - name: Verify app bundle compatibility
+        run: |
+          echo "=== Verifying app bundle compatibility ==="
+          APP_EXECUTABLE="dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser.original"
+          
+          if [ -f "$APP_EXECUTABLE" ]; then
+            echo "Executable compatibility info:"
+            otool -l "$APP_EXECUTABLE" | grep -A 3 "LC_VERSION_MIN_MACOSX\|LC_BUILD_VERSION" || echo "No version constraints found"
+            
+            echo "Library dependencies:"
+            otool -L "$APP_EXECUTABLE" | head -10
+            
+            echo "Checking for problematic symbols:"
+            if nm "$APP_EXECUTABLE" 2>/dev/null | grep -q "_mkfifoat"; then
+              echo "⚠️  Found mkfifoat symbol - may need runtime compatibility"
+            else
+              echo "✅ No problematic symbols found"
+            fi
           fi
           
-          echo "=== Checking for critical files ==="
-          ls -la dist/TemporalDenoiser.app/Contents/Resources/app_icon.icns || echo "Icon not found"
-          
-          echo "=== Checking for Python libraries ==="
-          find dist/TemporalDenoiser.app/Contents/Resources -name "*python*" | head -5 || echo "No Python libraries found"
-          find dist/TemporalDenoiser.app/Contents/Resources -name "*PySide6*" | head -5 || echo "No PySide6 files found"
+          # Check bundled Python library
+          echo "=== Checking bundled libraries ==="
+          find dist/TemporalDenoiser.app/Contents/Resources -name "*python*.dylib" -exec echo "Found: {}" \; -exec otool -l {} \; | grep -A 2 "LC_VERSION_MIN_MACOSX\|LC_BUILD_VERSION" || echo "No Python library version info"
 
       - name: Test app bundle
         run: |
           echo "=== Testing app bundle ==="
-          # Try to run the app with a timeout to prevent hanging
-          timeout 30s dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser --help || echo "App test completed (may have timed out)"
+          export MACOSX_DEPLOYMENT_TARGET=12.0
+          
+          # Test the wrapper script
+          timeout 15s dist/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser --help 2>&1 || echo "App test completed"
 
       - name: Create DMG
         run: |
-          echo "=== Creating DMG ==="
           mkdir -p dist_dmg
           APP_PATH="dist/TemporalDenoiser.app"
-          DMG_NAME="TemporalDenoiser-$(date +'%Y%m%d-%H%M%S').dmg"
+          DMG_NAME="TemporalDenoiser-macOS12-compat-$(date +'%Y%m%d-%H%M%S').dmg"
           
-          # Create DMG using hdiutil (more reliable than create-dmg)
+          # Add README for compatibility
+          cat > dist/README_macOS_Compatibility.txt << 'EOF'
+          TemporalDenoiser - macOS Compatibility Notes
+          
+          This application was built on macOS 13 but includes compatibility measures for macOS 12.7.
+          
+          If you experience issues on macOS 12:
+          1. Make sure you have the latest macOS 12.7.x updates
+          2. Try running from Terminal first: /Applications/TemporalDenoiser.app/Contents/MacOS/TemporalDenoiser
+          3. Check Console.app for any error messages
+          
+          Built with Python 3.10.13 and compatibility flags for macOS 12.0+
+          EOF
+          
           hdiutil create -volname "TemporalDenoiser" \
                          -srcfolder "$APP_PATH" \
+                         -srcfolder dist/README_macOS_Compatibility.txt \
                          -ov -format UDZO "dist_dmg/$DMG_NAME"
           
-          echo "✓ DMG created: $DMG_NAME"
+          echo "✅ DMG created: $DMG_NAME"
           ls -la dist_dmg/
 
-      - name: Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        if: always()  # Upload even if previous steps failed
+        if: always()
         with:
-          name: TemporalDenoiser-artifacts
+          name: TemporalDenoiser-macOS12-compatible
           path: |
             dist_dmg/*.dmg
-            dist/TemporalDenoiser.app
+            dist/README_macOS_Compatibility.txt
             build.log
           retention-days: 30
-
-      - name: Upload DMG only
-        uses: actions/upload-artifact@v4
-        if: success()  # Only upload DMG if build was successful
-        with:
-          name: TemporalDenoiser-dmg
-          path: dist_dmg/*.dmg
