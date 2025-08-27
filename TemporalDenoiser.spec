@@ -11,7 +11,7 @@ import glob
 proj_root = Path(".").resolve()
 
 # Base site-packages path
-site_packages = "/usr/local/opt/python@3.10/lib/python3.10/site-packages"
+site_packages = "/usr/local/opt/python@3.10.8/lib/python3.10/site-packages"
 
 # Dynamically locate rawpy/libraw
 rawpy_path = f"{site_packages}/rawpy"
@@ -23,14 +23,13 @@ if os.path.exists(os.path.join(rawpy_path, "libraw")):
 libraw_binaries = [('/usr/local/opt/libraw/lib/libraw.23.dylib', 'rawpy/libraw')]
 
 # Dynamically locate libpython3.10.dylib
-libpython_binaries = [('/usr/local/Cellar/python@3.10/3.10.18/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib', '.')]
+libpython_binaries = [('/usr/local/Cellar/python@3.10.8/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib', '.')]
 
 # Dynamically locate PySide6 libraries
 pyside6_path = f"{site_packages}/PySide6"
 pyside6_binaries = []
 pyside6_data = []
 if os.path.exists(pyside6_path):
-    # Include PySide6 dylibs dynamically
     for dylib in glob.glob(f"{pyside6_path}/libpyside6*.dylib"):
         pyside6_binaries.append((dylib, "PySide6"))
     for dylib in glob.glob(f"{pyside6_path}/libpyside6qml*.dylib"):
@@ -38,7 +37,6 @@ if os.path.exists(pyside6_path):
     pyside6_data = [(f"{pyside6_path}/*", "PySide6")]
     qt_lib_path = f"{pyside6_path}/Qt/lib"
     if os.path.exists(qt_lib_path):
-        # Include only required Qt frameworks
         for framework in ['QtCore.framework/Versions/Current/QtCore', 
                          'QtGui.framework/Versions/Current/QtGui', 
                          'QtWidgets.framework/Versions/Current/QtWidgets']:
@@ -85,7 +83,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['PySide6.QtWebEngineCore'],  # Exclude QtWebEngineCore
+    excludes=['PySide6.QtWebEngineCore'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
