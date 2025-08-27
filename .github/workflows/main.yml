@@ -15,45 +15,47 @@ jobs:
       - name: Install Homebrew and dependencies
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew install gfortran python@3.10.8 libraw
-          echo "/usr/local/opt/python@3.10.8/bin" >> $GITHUB_PATH
-          echo "/usr/local/opt/python@3.10.8/libexec/bin" >> $GITHUB_PATH
+          brew install gfortran python@3.10 libraw
+          echo "/usr/local/opt/python@3.10/bin" >> $GITHUB_PATH
+          echo "/usr/local/opt/python@3.10/libexec/bin" >> $GITHUB_PATH
 
       - name: Install Python dependencies
         run: |
-          /usr/local/opt/python@3.10.8/bin/python3.10 -m pip install --upgrade pip
-          /usr/local/opt/python@3.10.8/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10.8/lib/python3.10/site-packages "setuptools<81" PySide6>=6.5.0 tifffile>=2022.8.12 rawpy>=0.17.0 numpy==1.24.3 scipy==1.10.1 opencv-python==4.7.0.72 imageio==2.28.1 PyInstaller==5.13.0 macholib>=1.16
-          /usr/local/opt/python@3.10.8/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10.8/lib/python3.10/site-packages --no-deps -r requirements.txt
-          /usr/local/opt/python@3.10.8/bin/python3.10 -m pip list --path /usr/local/opt/python@3.10.8/lib/python3.10/site-packages
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --upgrade pip
+          export LDFLAGS="-L/usr/local/opt/libraw/lib"
+          export CFLAGS="-I/usr/local/opt/libraw/include"
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages "setuptools<81" PySide6>=6.5.0 tifffile>=2022.8.12 rawpy>=0.17.0 numpy==1.24.3 scipy==1.10.1 opencv-python==4.7.0.72 imageio==2.28.1 PyInstaller==5.13.0 macholib>=1.16
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip install --target=/usr/local/opt/python@3.10/lib/python3.10/site-packages --no-deps -r requirements.txt
+          /usr/local/opt/python@3.10/bin/python3.10 -m pip list --path /usr/local/opt/python@3.10/lib/python3.10/site-packages
           echo "Checking default Python site-packages:"
           ls -l /Users/runner/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages || echo "Default site-packages not found"
 
       - name: Debug Homebrew Python and dependencies
         run: |
           echo "Homebrew Python version and path:"
-          /usr/local/opt/python@3.10.8/bin/python3.10 --version
+          /usr/local/opt/python@3.10/bin/python3.10 --version
           which python3.10
           echo "Listing Homebrew Python lib directory:"
-          ls -l /usr/local/opt/python@3.10.8/lib || echo "Python lib directory not found"
+          ls -l /usr/local/opt/python@3.10/lib || echo "Python lib directory not found"
           echo "Listing site-packages:"
-          ls -l /usr/local/opt/python@3.10.8/lib/python3.10/site-packages || echo "site-packages not found"
+          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages || echo "site-packages not found"
           echo "Listing PySide6 directory contents:"
-          ls -R /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
+          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 || echo "PySide6 directory not found"
           echo "Listing PySide6 dylib files:"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6 -name "libpyside6*.dylib" || echo "No libpyside6 dylib files found"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6 -name "libpyside6qml*.dylib" || echo "No libpyside6qml dylib files found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "libpyside6*.dylib" || echo "No libpyside6 dylib files found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "libpyside6qml*.dylib" || echo "No libpyside6qml dylib files found"
           echo "Listing Qt frameworks in PySide6:"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6 -name "*.framework" || echo "No Qt frameworks found in PySide6"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtCore.framework" || echo "QtCore.framework not found"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtGui.framework" || echo "QtGui.framework not found"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWidgets.framework" || echo "QtWidgets.framework not found"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWebEngineCore.framework" || echo "QtWebEngineCore.framework not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6 -name "*.framework" || echo "No Qt frameworks found in PySide6"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtCore.framework" || echo "QtCore.framework not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtGui.framework" || echo "QtGui.framework not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWidgets.framework" || echo "QtWidgets.framework not found"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/PySide6/Qt/lib -name "QtWebEngineCore.framework" || echo "QtWebEngineCore.framework not found"
           echo "Listing rawpy directory contents:"
-          ls -R /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
+          ls -R /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy || echo "rawpy directory not found"
           echo "Checking for libraw in rawpy:"
-          ls -l /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
+          ls -l /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw || echo "libraw directory not found"
           echo "Listing all dylib files in rawpy/libraw:"
-          find /usr/local/opt/python@3.10.8/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
+          find /usr/local/opt/python@3.10/lib/python3.10/site-packages/rawpy/libraw -name "*.dylib" || echo "No dylib files found in rawpy/libraw"
           echo "Listing system libraw:"
           ls -l /usr/local/opt/libraw/lib || echo "System libraw not found"
           echo "Searching for libraw dylib:"
@@ -61,7 +63,7 @@ jobs:
           echo "Checking system Qt libraries:"
           find /usr/local/lib -name "libQt*.dylib" || echo "No system Qt libraries found"
           echo "Verifying rawpy installation:"
-          /usr/local/opt/python@3.10.8/bin/python3.10 -c "import rawpy; print(rawpy.__version__)" || echo "rawpy import failed"
+          /usr/local/opt/python@3.10/bin/python3.10 -c "import rawpy; print(rawpy.__version__)" || echo "rawpy import failed"
 
       - name: Debug cinemadng.py
         run: |
@@ -70,10 +72,10 @@ jobs:
 
       - name: Build with PyInstaller
         env:
-          PYTHONPATH: /usr/local/opt/python@3.10.8/lib/python3.10/site-packages
-          LD_LIBRARY_PATH: /usr/local/opt/python@3.10.8/lib:/usr/local/opt/libraw/lib
+          PYTHONPATH: /usr/local/opt/python@3.10/lib/python3.10/site-packages
+          LD_LIBRARY_PATH: /usr/local/opt/python@3.10/lib:/usr/local/opt/libraw/lib
         run: |
-          /usr/local/opt/python@3.10.8/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
+          /usr/local/opt/python@3.10/bin/python3.10 -m PyInstaller --log-level DEBUG TemporalDenoiser.spec
 
       - name: Inspect app bundle dependencies
         run: |
