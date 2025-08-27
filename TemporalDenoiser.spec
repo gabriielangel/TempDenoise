@@ -11,7 +11,7 @@ import glob
 proj_root = Path(".").resolve()
 
 # Base site-packages path
-site_packages = "/usr/local/opt/python@3.10.8/lib/python3.10/site-packages"
+site_packages = "/usr/local/opt/python@3.10/lib/python3.10/site-packages"
 
 # Dynamically locate rawpy/libraw
 rawpy_path = f"{site_packages}/rawpy"
@@ -23,7 +23,7 @@ if os.path.exists(os.path.join(rawpy_path, "libraw")):
 libraw_binaries = [('/usr/local/opt/libraw/lib/libraw.23.dylib', 'rawpy/libraw')]
 
 # Dynamically locate libpython3.10.dylib
-libpython_binaries = [('/usr/local/Cellar/python@3.10.8/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib', '.')]
+libpython_binaries = [('/usr/local/Cellar/python@3.10/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib', '.')]
 
 # Dynamically locate PySide6 libraries
 pyside6_path = f"{site_packages}/PySide6"
