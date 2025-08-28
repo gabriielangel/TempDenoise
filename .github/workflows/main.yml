@@ -98,7 +98,7 @@ jobs:
           # Install rawpy from source to ensure it's built against our numpy
           echo "Installing rawpy from source to ensure numpy compatibility..."
           python3 -m pip install --no-cache-dir --no-binary=rawpy --force-reinstall \
-            "rawpy>=0.17.0"
+            "rawpy>=0.25.1"
           
           # Install PyInstaller
           python3 -m pip install --no-cache-dir \
