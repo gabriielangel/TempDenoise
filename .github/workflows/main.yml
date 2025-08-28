@@ -95,10 +95,29 @@ jobs:
           python3 -m pip install --no-cache-dir --force-reinstall \
             "PySide6>=6.5.0,<6.7"
           
-          # Install rawpy from source to ensure it's built against our numpy
-          echo "Installing rawpy from source to ensure numpy compatibility..."
-          python3 -m pip install --no-cache-dir --no-binary=rawpy --force-reinstall \
-            "rawpy>=0.25.1"
+          # Install rawpy with multiple fallback strategies
+          echo "Installing rawpy with fallback strategies..."
+          
+          # Strategy 1: Try binary first with broader version range
+          python3 -m pip install --no-cache-dir "rawpy>=0.17.0" || {
+            echo "Binary rawpy failed, trying source build..."
+            
+            # Strategy 2: Try building from source with no version constraint
+            python3 -m pip install --no-cache-dir --no-binary=rawpy "rawpy" || {
+              echo "Source build failed, trying specific known-good version..."
+              
+              # Strategy 3: Try specific version known to work with numpy 1.24
+              python3 -m pip install --no-cache-dir "rawpy==0.18.1" || {
+                echo "Specific version failed, trying latest available..."
+                
+                # Strategy 4: Try latest available version
+                python3 -m pip install --no-cache-dir --upgrade "rawpy" || {
+                  echo "All rawpy installation strategies failed"
+                  exit 1
+                }
+              }
+            }
+          }
           
           # Install PyInstaller
           python3 -m pip install --no-cache-dir \
