@@ -84,6 +84,47 @@ def find_libraw():
     print("libraw not found - rawpy may not work properly")
     return None
 
+def collect_numpy_data():
+    """Collect all NumPy data files and binaries explicitly"""
+    numpy_data = []
+    numpy_binaries = []
+    
+    try:
+        import numpy
+        numpy_path = Path(numpy.__file__).parent
+        print(f"NumPy installation path: {numpy_path}")
+        
+        # Collect all .so/.pyd files from numpy
+        for ext in ['*.so', '*.pyd', '*.dylib']:
+            for so_file in numpy_path.rglob(ext):
+                rel_path = so_file.relative_to(numpy_path)
+                numpy_binaries.append((str(so_file), f"numpy/{rel_path.parent}"))
+                print(f"Added NumPy binary: {rel_path}")
+        
+        # Collect specific data files that might be needed
+        data_patterns = [
+            '*.txt', '*.dat', '*.json', 'VERSION'
+        ]
+        for pattern in data_patterns:
+            for data_file in numpy_path.rglob(pattern):
+                if data_file.is_file():
+                    rel_path = data_file.relative_to(numpy_path)
+                    numpy_data.append((str(data_file), f"numpy/{rel_path.parent}"))
+        
+        # Specifically look for core test modules that might be needed
+        core_path = numpy_path / 'core'
+        if core_path.exists():
+            for test_file in core_path.rglob('*test*'):
+                if test_file.suffix in ['.so', '.pyd', '.dylib'] and test_file.is_file():
+                    rel_path = test_file.relative_to(numpy_path)
+                    numpy_binaries.append((str(test_file), f"numpy/{rel_path.parent}"))
+                    print(f"Added NumPy test binary: {rel_path}")
+    
+    except Exception as e:
+        print(f"Error collecting NumPy data: {e}")
+    
+    return numpy_data, numpy_binaries
+
 # Find libraries
 python_lib = find_python_lib()
 libraw_lib = find_libraw()
@@ -99,10 +140,15 @@ else:
 if libraw_lib:
     binaries.append((libraw_lib, '.'))
 
+# Collect NumPy data and binaries
+numpy_data, numpy_binaries = collect_numpy_data()
+binaries.extend(numpy_binaries)
+
 # Collect data files
 data_files = [
     ('temporal_denoiser/resources/app_icon.icns', '.')
 ]
+data_files.extend(numpy_data)
 
 # Helper function to safely collect package data
 def safe_collect_data(package_name, include_py=False):
@@ -155,7 +201,7 @@ except Exception as e:
 print(f"Total binaries: {len(binaries)}")
 print(f"Total data files: {len(data_files)}")
 
-# Collect hidden imports
+# Collect hidden imports with comprehensive NumPy support
 hidden_imports = [
     # Core app modules
     "temporal_denoiser.cinemadng",
@@ -176,16 +222,54 @@ hidden_imports = [
     "imageio.plugins.pillow",
     "imageio.plugins.tifffile",
     
-    # Scientific computing
+    # Comprehensive NumPy imports - this is the key fix
+    "numpy",
+    "numpy.core",
     "numpy.core._multiarray_umath",
+    "numpy.core._multiarray_tests",  # This was missing!
+    "numpy.core.multiarray",
+    "numpy.core.umath",
+    "numpy.core._methods",
+    "numpy.core._type_aliases", 
+    "numpy.core._dtype_ctypes",
+    "numpy.core._internal",
+    "numpy.core._exceptions",
+    "numpy.fft",
+    "numpy.lib",
+    "numpy.linalg",
+    "numpy.ma",
+    "numpy.matrixlib",
+    "numpy.polynomial",
+    "numpy.random",
     "numpy.random._pickle",
+    "numpy.random.mtrand",
+    "numpy.random._common",
+    "numpy.random._generator",
+    "numpy.random._mt19937",
+    "numpy.random._philox",
+    "numpy.random._pcg64",
+    "numpy.random._sfc64",
+    "numpy.random.bit_generator",
+    "numpy.testing",
+    "numpy.distutils",
     
     # OpenCV essentials
     "cv2",
     "cv2.data"
 ]
 
-# Add some submodules for critical packages
+# Collect NumPy submodules comprehensively
+try:
+    numpy_submodules = safe_collect_submodules("numpy")
+    # Add all NumPy submodules to be safe
+    for submod in numpy_submodules:
+        if submod not in hidden_imports:
+            hidden_imports.append(submod)
+    print(f"Added {len(numpy_submodules)} NumPy submodules")
+except Exception as e:
+    print(f"Could not collect NumPy submodules: {e}")
+
+# Add some submodules for other critical packages
 critical_packages = ["PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets"]
 for pkg in critical_packages:
     try:
@@ -208,7 +292,7 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=['runtime_hooks/pyi_rth_macos_compat.py'],
     excludes=[
-        # Exclude heavy/unnecessary modules
+        # Exclude heavy/unnecessary modules but be more conservative
         'PySide6.QtWebEngineCore',
         'PySide6.QtWebEngineWidgets', 
         'PySide6.QtWebChannel',
@@ -234,21 +318,23 @@ a = Analysis(
     noarchive=False
 )
 
-# Filter out problematic files
+# Filter out problematic files but keep NumPy test modules
 def filter_binaries(binaries_list):
     """Filter out problematic or unnecessary binaries"""
     filtered = []
     skip_patterns = [
-        'test_',
-        '_test',
         '.pyo',
         'debug',
         'PyQt'
     ]
+    # Remove test_ pattern from skip list to keep NumPy tests
     
     for binary in binaries_list:
         name = binary[0] if isinstance(binary, tuple) else str(binary)
-        if not any(pattern in name.lower() for pattern in skip_patterns):
+        # Keep NumPy test modules but skip other test modules
+        if 'numpy' in name.lower() and 'test' in name.lower():
+            filtered.append(binary)
+        elif not any(pattern in name.lower() for pattern in skip_patterns):
             filtered.append(binary)
         else:
             print(f"Skipping binary: {name}")
