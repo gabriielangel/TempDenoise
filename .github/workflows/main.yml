@@ -70,54 +70,73 @@ jobs:
             "wheel<0.42" \
             "Cython<3.0"
           
-          # CRITICAL: Install numpy first, then build everything else against it
-          # This prevents binary incompatibility issues
+          # CRITICAL: Install numpy first with explicit version pinning
+          # Use --force-reinstall to ensure we get exactly this version
           python3 -m pip install --no-cache-dir --force-reinstall \
             "numpy==1.24.3"
           
           # Verify numpy installation
           python3 -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
           
-          # Install scipy using pre-built binary (avoid fortran requirement)
+          # Install packages with explicit numpy<2 constraint to prevent upgrades
           python3 -m pip install --no-cache-dir --force-reinstall \
-            "scipy==1.10.1"
+            "scipy==1.10.1" \
+            "opencv-python==4.7.0.72" \
+            --constraint <(echo "numpy<2")
           
-          # Install opencv-python (use binary to avoid build issues)
-          python3 -m pip install --no-cache-dir --force-reinstall \
-            "opencv-python==4.7.0.72"
+          # Double-check numpy wasn't upgraded
+          python3 -c "
+          import numpy
+          print(f'NumPy version after scipy/opencv: {numpy.__version__}')
+          if not numpy.__version__.startswith('1.24'):
+              print('ERROR: NumPy was upgraded unexpectedly!')
+              exit(1)
+          "
           
-          # Install other image processing libraries
+          # Install other image processing libraries with numpy constraint
           python3 -m pip install --no-cache-dir --force-reinstall \
             "imageio==2.28.1" \
-            "tifffile>=2022.8.12,<2024"
+            "tifffile>=2022.8.12,<2024" \
+            --constraint <(echo "numpy<2")
           
           # Install GUI libraries (should not depend on numpy C API)
           python3 -m pip install --no-cache-dir --force-reinstall \
             "PySide6>=6.5.0,<6.7"
           
-          # Install rawpy with multiple fallback strategies
+          # Install rawpy with multiple fallback strategies and numpy constraint
           echo "Installing rawpy with fallback strategies..."
           
           # Strategy 1: Try binary first with broader version range
-          python3 -m pip install --no-cache-dir "rawpy>=0.17.0" || {
+          python3 -m pip install --no-cache-dir "rawpy>=0.17.0" --constraint <(echo "numpy<2") || {
             echo "Binary rawpy failed, trying source build..."
             
             # Strategy 2: Try building from source with no version constraint
-            python3 -m pip install --no-cache-dir --no-binary=rawpy "rawpy" || {
+            python3 -m pip install --no-cache-dir --no-binary=rawpy "rawpy" --constraint <(echo "numpy<2") || {
               echo "Source build failed, trying specific known-good version..."
               
               # Strategy 3: Try specific version known to work with numpy 1.24
-              python3 -m pip install --no-cache-dir "rawpy==0.18.1" || {
+              python3 -m pip install --no-cache-dir "rawpy==0.18.1" --constraint <(echo "numpy<2") || {
                 echo "Specific version failed, trying latest available..."
                 
                 # Strategy 4: Try latest available version
-                python3 -m pip install --no-cache-dir --upgrade "rawpy" || {
+                python3 -m pip install --no-cache-dir --upgrade "rawpy" --constraint <(echo "numpy<2") || {
                   echo "All rawpy installation strategies failed"
                   exit 1
                 }
               }
             }
           }
+          
+          # Final numpy version check
+          python3 -c "
+          import numpy
+          print(f'Final NumPy version: {numpy.__version__}')
+          if not numpy.__version__.startswith('1.24'):
+              print('ERROR: NumPy version changed during installation!')
+              print('This will cause compatibility issues.')
+              exit(1)
+          print('NumPy version is correct')
+          "
           
           # Install PyInstaller
           python3 -m pip install --no-cache-dir \
