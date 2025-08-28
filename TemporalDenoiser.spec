@@ -1,5 +1,5 @@
 # TemporalDenoiser.spec
-# PyInstaller spec file for macOS 13 runner with macOS 12 compatibility
+# PyInstaller spec file for macOS 12 compatibility using GitHub Actions setup-python
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
@@ -19,28 +19,18 @@ proj_root = Path(".").resolve()
 site_packages = sysconfig.get_paths()['purelib']
 print(f"Using site-packages: {site_packages}")
 
-def find_compatible_python_lib():
-    """Find Python library with preference for compatibility"""
+def find_python_lib():
+    """Find Python library for the current installation"""
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
     lib_name = f"libpython{python_version}.dylib"
     
-    # Check pyenv installation first (most likely to be compatible)
-    pyenv_root = os.environ.get('PYENV_ROOT', os.path.expanduser('~/.pyenv'))
-    if os.path.exists(pyenv_root):
-        pyenv_paths = [
-            f"{pyenv_root}/versions/{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}/lib/{lib_name}",
-            f"{pyenv_root}/versions/{python_version}/lib/{lib_name}"
-        ]
-        for path in pyenv_paths:
-            if os.path.exists(path):
-                print(f"Found pyenv Python library: {path}")
-                return path
-    
-    # Check current Python installation
+    # Common locations for GitHub Actions setup-python
     possible_paths = [
         os.path.join(sys.prefix, 'lib', lib_name),
         os.path.join(sys.exec_prefix, 'lib', lib_name),
-        f"/usr/local/lib/{lib_name}"
+        f"/usr/local/lib/{lib_name}",
+        f"/Library/Frameworks/Python.framework/Versions/{python_version}/lib/{lib_name}",
+        f"/usr/local/opt/python@{python_version}/lib/{lib_name}"
     ]
     
     # Add stdlib location
@@ -52,42 +42,15 @@ def find_compatible_python_lib():
     except:
         pass
     
-    # Check Homebrew paths last (might be less compatible)
-    possible_paths.extend([
-        f"/usr/local/opt/python@{python_version}/lib/{lib_name}",
-        f"/usr/local/Cellar/python@{python_version}/*/lib/{lib_name}",
-        f"/usr/local/opt/python@{python_version}/Frameworks/Python.framework/Versions/{python_version}/lib/{lib_name}"
-    ])
-    
     for path_pattern in possible_paths:
         if '*' in path_pattern:
             matches = glob.glob(path_pattern)
-            if matches:
-                path = matches[0]
-            else:
-                continue
+            path = matches[0] if matches else None
         else:
             path = path_pattern
             
-        if os.path.exists(path):
+        if path and os.path.exists(path):
             print(f"Found Python library at: {path}")
-            
-            # Check if it's compatible (best effort)
-            try:
-                import subprocess
-                result = subprocess.run(['otool', '-l', path], capture_output=True, text=True, timeout=10)
-                if result.returncode == 0:
-                    # Look for version constraints
-                    output = result.stdout.lower()
-                    if 'minos 13.' in output or 'minos 14.' in output:
-                        print(f"Warning: {path} may require macOS 13+, but will try to use it")
-                    elif 'minos 12.' in output or 'minos 11.' in output or 'minos 10.' in output:
-                        print(f"Good: {path} appears compatible with macOS 12")
-                    else:
-                        print(f"No explicit version constraint found in {path}")
-            except Exception as e:
-                print(f"Could not check compatibility of {path}: {e}")
-            
             return path
     
     print(f"No Python library found. Searched: {possible_paths}")
@@ -99,7 +62,8 @@ def find_libraw():
         "/usr/local/lib/libraw.dylib",
         "/usr/local/opt/libraw/lib/libraw.dylib",
         "/usr/local/opt/libraw/lib/libraw.23.dylib",
-        "/usr/local/opt/libraw/lib/libraw.20.dylib"
+        "/usr/local/opt/libraw/lib/libraw.20.dylib",
+        "/opt/homebrew/lib/libraw.dylib"  # Apple Silicon
     ]
     
     for path in possible_paths:
@@ -108,18 +72,20 @@ def find_libraw():
             return path
     
     # Search for any libraw version
-    for pattern in ["/usr/local/opt/libraw/lib/libraw*.dylib", "/usr/local/lib/libraw*.dylib"]:
+    for pattern in ["/usr/local/opt/libraw/lib/libraw*.dylib", 
+                   "/usr/local/lib/libraw*.dylib",
+                   "/opt/homebrew/lib/libraw*.dylib"]:
         matches = glob.glob(pattern)
         if matches:
             path = matches[0]
             print(f"Found libraw: {path}")
             return path
     
-    print("libraw not found")
+    print("libraw not found - rawpy may not work properly")
     return None
 
 # Find libraries
-python_lib = find_compatible_python_lib()
+python_lib = find_python_lib()
 libraw_lib = find_libraw()
 
 # Build binaries list
@@ -131,9 +97,7 @@ else:
     print("WARNING: No Python library found - app may not work")
 
 if libraw_lib:
-    binaries.append((libraw_lib, 'rawpy/libraw'))
-else:
-    print("WARNING: libraw not found - rawpy may not work")
+    binaries.append((libraw_lib, '.'))
 
 # Collect data files
 data_files = [
@@ -157,37 +121,34 @@ def safe_collect_submodules(package_name):
         print(f"Could not collect {package_name} submodules: {e}")
         return []
 
-# Collect package data files
-packages_to_collect = ["PySide6", "rawpy", "cv2", "imageio", "numpy", "scipy", "tifffile"]
-for pkg in packages_to_collect:
-    pkg_data = safe_collect_data(pkg, include_py=False)
-    data_files.extend(pkg_data)
-    print(f"Collected {len(pkg_data)} data files for {pkg}")
+# Collect package data files (reduced list for reliability)
+essential_packages = ["PySide6", "rawpy", "cv2", "imageio"]
+for pkg in essential_packages:
+    try:
+        pkg_data = safe_collect_data(pkg, include_py=False)
+        data_files.extend(pkg_data)
+        print(f"Collected {len(pkg_data)} data files for {pkg}")
+    except:
+        print(f"Skipped data collection for {pkg}")
 
-# Collect PySide6 binaries specifically
+# Look for PySide6 Qt libraries specifically
 try:
     pyside6_path = os.path.join(site_packages, "PySide6")
     if os.path.exists(pyside6_path):
-        # Look for PySide6 dynamic libraries
-        for pattern in ["libpyside6*.dylib", "libshiboken6*.dylib"]:
-            for dylib in glob.glob(os.path.join(pyside6_path, pattern)):
-                binaries.append((dylib, "PySide6"))
-                print(f"Added PySide6 binary: {os.path.basename(dylib)}")
+        # Look for essential Qt libraries
+        qt_lib_patterns = [
+            os.path.join(pyside6_path, "*.dylib"),
+            os.path.join(pyside6_path, "Qt", "lib", "*.dylib"),
+            os.path.join(pyside6_path, "Qt", "lib", "Qt*.framework", "Versions", "Current", "Qt*")
+        ]
         
-        # Look for Qt frameworks
-        qt_lib_path = os.path.join(pyside6_path, "Qt", "lib")
-        if os.path.exists(qt_lib_path):
-            qt_frameworks = [
-                "QtCore.framework/Versions/Current/QtCore",
-                "QtGui.framework/Versions/Current/QtGui",
-                "QtWidgets.framework/Versions/Current/QtWidgets"
-            ]
-            for framework in qt_frameworks:
-                framework_path = os.path.join(qt_lib_path, framework)
-                if os.path.exists(framework_path):
-                    dest_path = f"PySide6/Qt/lib/{framework.split('/')[0]}"
-                    binaries.append((framework_path, dest_path))
-                    print(f"Added Qt framework: {framework.split('/')[0]}")
+        for pattern in qt_lib_patterns:
+            for lib_file in glob.glob(pattern):
+                if os.path.isfile(lib_file):
+                    rel_path = os.path.relpath(lib_file, pyside6_path)
+                    binaries.append((lib_file, f"PySide6/{os.path.dirname(rel_path)}" if os.path.dirname(rel_path) else "PySide6"))
+                    print(f"Added PySide6 binary: {os.path.basename(lib_file)}")
+                    
 except Exception as e:
     print(f"Error collecting PySide6 binaries: {e}")
 
@@ -202,28 +163,36 @@ hidden_imports = [
     
     # Essential packages
     "tifffile",
+    "tifffile._tifffile",
     
     # PySide6 core modules
     "PySide6.QtCore",
-    "PySide6.QtGui",
+    "PySide6.QtGui", 
     "PySide6.QtWidgets",
     "shiboken6",
     
-    # Image processing
+    # Image processing essentials
     "imageio.plugins",
-    "imageio.plugins._tifffile",
+    "imageio.plugins.pillow",
+    "imageio.plugins.tifffile",
     
     # Scientific computing
     "numpy.core._multiarray_umath",
     "numpy.random._pickle",
-    "scipy.sparse.csgraph._validation"
+    
+    # OpenCV essentials
+    "cv2",
+    "cv2.data"
 ]
 
-# Add package submodules
-for pkg in ["PySide6", "cv2", "numpy", "scipy", "rawpy", "imageio"]:
-    submodules = safe_collect_submodules(pkg)
-    hidden_imports.extend(submodules)
-    print(f"Added {len(submodules)} hidden imports for {pkg}")
+# Add some submodules for critical packages
+critical_packages = ["PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets"]
+for pkg in critical_packages:
+    try:
+        submodules = safe_collect_submodules(pkg)
+        hidden_imports.extend(submodules[:10])  # Limit to avoid bloat
+    except:
+        pass
 
 print(f"Total hidden imports: {len(hidden_imports)}")
 
@@ -237,29 +206,56 @@ a = Analysis(
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=['runtime_hooks/pyi_rth_macos_compat.py'],  # Our compatibility hook
+    runtime_hooks=['runtime_hooks/pyi_rth_macos_compat.py'],
     excludes=[
         # Exclude heavy/unnecessary modules
         'PySide6.QtWebEngineCore',
-        'PySide6.QtWebEngineWidgets',
+        'PySide6.QtWebEngineWidgets', 
         'PySide6.QtWebChannel',
         'PySide6.QtQml',
         'PySide6.QtQuick',
         'PySide6.Qt3DCore',
         'PySide6.Qt3DRender',
+        'PySide6.QtMultimedia',
+        'PySide6.QtCharts',
         'tkinter',
         'matplotlib',
         'IPython',
         'jupyter',
         'notebook',
         'sphinx',
-        'pytest'
+        'pytest',
+        'PyQt5',
+        'PyQt6'
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False
 )
+
+# Filter out problematic files
+def filter_binaries(binaries_list):
+    """Filter out problematic or unnecessary binaries"""
+    filtered = []
+    skip_patterns = [
+        'test_',
+        '_test',
+        '.pyo',
+        'debug',
+        'PyQt'
+    ]
+    
+    for binary in binaries_list:
+        name = binary[0] if isinstance(binary, tuple) else str(binary)
+        if not any(pattern in name.lower() for pattern in skip_patterns):
+            filtered.append(binary)
+        else:
+            print(f"Skipping binary: {name}")
+    
+    return filtered
+
+a.binaries = filter_binaries(a.binaries)
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
@@ -272,7 +268,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # Disable UPX to avoid compatibility issues
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=True,
@@ -287,7 +283,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='TemporalDenoiser'
 )
@@ -305,6 +301,8 @@ app = BUNDLE(
         'LSApplicationCategoryType': 'public.app-category.photography',
         'NSHighResolutionCapable': True,
         'NSRequiresAquaSystemAppearance': False,
-        'CFBundleExecutable': 'TemporalDenoiser'
+        'CFBundleExecutable': 'TemporalDenoiser',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleSignature': '????'
     }
 )
