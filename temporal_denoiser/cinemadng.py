@@ -102,3 +102,7 @@ try:
             except Exception as e:
                 logger.error(f"Failed to save denoised images: {e}")
                 raise
+
+except Exception as e:
+    logger.error(f"Failed to define CinemaDNG class: {e}")
+    raise
