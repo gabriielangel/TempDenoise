@@ -70,38 +70,38 @@ try:
                 raise
 
         def denoise(self, frame_idx: int, frame_radius: int = 3, spatial_median: int = 0, align: bool = True, winsize: int = 15, iterations: int = 3):
-    logger.debug(f"Denoising frame {frame_idx} with frame_radius={frame_radius}, spatial_median={spatial_median}, align={align}, winsize={winsize}, iterations={iterations}")
-    try:
-        images = self.get_images()  # Load with rawpy first
-        if not images:
-            logger.warning("No images loaded for denoising")
-            return None
-        denoiser = PreviewDenoiser()
-        orig, denoised = denoiser.preview(images, frame_idx, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
-        logger.info("Denoising completed")
-        return denoised
-    except Exception as e:
-        logger.error(f"Denoising failed: {e}")
-        raise
+            logger.debug(f"Denoising frame {frame_idx} with frame_radius={frame_radius}, spatial_median={spatial_median}, align={align}, winsize={winsize}, iterations={iterations}")
+            try:
+                images = self.get_images()  # Load with rawpy first
+                if not images:
+                    logger.warning("No images loaded for denoising")
+                    return None
+                denoiser = PreviewDenoiser()
+                orig, denoised = denoiser.preview(images, frame_idx, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
+                logger.info("Denoising completed")
+                return denoised
+            except Exception as e:
+                logger.error(f"Denoising failed: {e}")
+                raise
 
-def save_denoised(self, output_dir, frame_radius=3, spatial_median=0, align=True, winsize=15, iterations=3):
-    logger.debug(f"Saving denoised images to {output_dir}")
-    try:
-        images = self.get_images()  # Load with rawpy first
-        if not images:
-            logger.warning("No images loaded for saving")
-            return
-        os.makedirs(output_dir, exist_ok=True)
-        exporter = StreamExporter()
-        exporter.export(images, output_dir, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
-        if not HAS_TIFFFILE:
-            logger.warning("Saved images as PNG due to missing tifffile")
-        else:
-            logger.info("Saved images as DNG")
-        logger.info(f"Denoised images saved to {output_dir}")
-    except Exception as e:
-        logger.error(f"Failed to save denoised images: {e}")
-        raise
+        def save_denoised(self, output_dir, frame_radius=3, spatial_median=0, align=True, winsize=15, iterations=3):
+            logger.debug(f"Saving denoised images to {output_dir}")
+            try:
+                images = self.get_images()  # Load with rawpy first
+                if not images:
+                    logger.warning("No images loaded for saving")
+                    return
+                os.makedirs(output_dir, exist_ok=True)
+                exporter = StreamExporter()
+                exporter.export(images, output_dir, frame_radius, spatial_median, align=align, winsize=winsize, iterations=iterations)
+                if not HAS_TIFFFILE:
+                    logger.warning("Saved images as PNG due to missing tifffile")
+                else:
+                    logger.info("Saved images as DNG")
+                logger.info(f"Denoised images saved to {output_dir}")
+            except Exception as e:
+                logger.error(f"Failed to save denoised images: {e}")
+                raise
 
 except Exception as e:
     logger.error(f"Failed to define CinemaDNG class: {e}")
