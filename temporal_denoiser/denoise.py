@@ -7,8 +7,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class PreviewDenoiser:
-    def preview(self, images, frame_idx, frame_radius, spatial_median, align=True, winsize=15, iterations=3):
-        logger.debug(f"Preview denoising frame {frame_idx} with radius {frame_radius}, align={align}, winsize={winsize}, iterations={iterations}")
+    def preview(self, images, frame_idx, frame_radius, spatial_median, align=True, winsize=15, iterations=3, pyr_scale=0.5, levels=3, poly_n=5, poly_sigma=1.2):
+        logger.debug(f"Preview denoising frame {frame_idx} with radius {frame_radius}, align={align}, winsize={winsize}, iterations={iterations}, pyr_scale={pyr_scale}, levels={levels}, poly_n={poly_n}, poly_sigma={poly_sigma}")
         try:
             # Handle both file paths and numpy arrays
             processed_images = []
@@ -51,10 +51,10 @@ class PreviewDenoiser:
                         # Convert current frame to grayscale for optical flow
                         curr_gray = cv2.cvtColor((processed_images[i] * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY)
                         
-                        # Calculate optical flow
+                        # Calculate optical flow with fine-tuning parameters
                         flow = cv2.calcOpticalFlowFarneback(
                             orig_gray, curr_gray,
-                            None, 0.5, 3, winsize, iterations, 5, 1.2, 0
+                            None, pyr_scale, levels, winsize, iterations, poly_n, poly_sigma, 0
                         )
                         
                         # Create coordinate grids for remapping
@@ -93,8 +93,8 @@ class PreviewDenoiser:
             raise
 
 class StreamExporter:
-    def export(self, images, output_dir, frame_radius, spatial_median, align=True, winsize=15, iterations=3):
-        logger.debug(f"Exporting denoised images to {output_dir} with radius {frame_radius}, align={align}, winsize={winsize}, iterations={iterations}")
+    def export(self, images, output_dir, frame_radius, spatial_median, align=True, winsize=15, iterations=3, pyr_scale=0.5, levels=3, poly_n=5, poly_sigma=1.2):
+        logger.debug(f"Exporting denoised images to {output_dir} with radius {frame_radius}, align={align}, winsize={winsize}, iterations={iterations}, pyr_scale={pyr_scale}, levels={levels}, poly_n={poly_n}, poly_sigma={poly_sigma}")
         try:
             # Handle both file paths and numpy arrays
             processed_images = []
@@ -141,10 +141,10 @@ class StreamExporter:
                             # Convert current frame to grayscale for optical flow
                             curr_gray = cv2.cvtColor((processed_images[i] * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY)
                             
-                            # Calculate optical flow
+                            # Calculate optical flow with fine-tuning parameters
                             flow = cv2.calcOpticalFlowFarneback(
                                 orig_gray, curr_gray,
-                                None, 0.5, 3, winsize, iterations, 5, 1.2, 0
+                                None, pyr_scale, levels, winsize, iterations, poly_n, poly_sigma, 0
                             )
                             
                             # Create coordinate grids for remapping
