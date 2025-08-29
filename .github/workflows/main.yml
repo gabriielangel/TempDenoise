@@ -611,11 +611,14 @@ jobs:
           echo "DMG created: $DMG_NAME"
           ls -lah dist_dmg/
 
+      - name: Set short commit SHA
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: TemporalDenoiser-macOS12-compatible-NumPy-fixed
+          name: TemporalDenoiser-macOS12-compatible-NumPy-fixed-${{ env.SHORT_SHA }}
           path: |
             dist_dmg/*.dmg
             dist/README_macOS_Compatibility.txt
@@ -626,7 +629,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: build-logs-failure-numpy-fix
+          name: build-logs-failure-numpy-fix-${{ env.SHORT_SHA }}
           path: |
             build.log
             build/
